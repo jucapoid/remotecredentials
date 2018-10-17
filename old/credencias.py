@@ -1,14 +1,14 @@
 """
 Dividir em funçoes
 """
-photo = sys.argv[1]
-name = sys.argv[2]
-cc = sys,argv[3]
-
 from PIL import Image, ImageFont, ImageDraw, PSDraw
 from tkinter import *
 import pyqrcode, sys
 
+
+photo = sys.argv[1]
+name = sys.argv[2]
+cc = sys.argv[3]
 credN = sys.argv[1] + sys.argv[2]
 # credN = sys.argv[1:3].join()
 

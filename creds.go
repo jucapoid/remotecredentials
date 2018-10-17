@@ -12,7 +12,7 @@ import "github.com/lib/pq"
 
 func main() {
 	// var name, cc, photo string  // For normal usage with fmt.Scanf
-	var name, cc, photo string = 'Ze Teste', '11227788', 'photo.png'
+	var name, cc, photo string = 'Ze Teste', '11227788', 'photo.jpg'
 	fmt.Println("Hello this does basicly nothing yet...")
 	//reader := bufio.NewReader(os.Stdin)  // Use this if fmt.Scanf still dosen't wait for input, this or the workaround for the fmt.Scanf
 	//name := reader.ReadString('\n')
@@ -25,6 +25,10 @@ func main() {
 	fmt.Scanf('%s', &cc)
 */
 	oldCred(photo, name, cc)
+}
+
+func creds() {
+	fmt.Println("This hasn't been written yet...")
 }
 
 
