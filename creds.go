@@ -1,6 +1,6 @@
 package creds
 
-import ("fmt" "image" "os/exec" "bufio" "os" "database/sql")
+import ("fmt" "image/draw" "image" "os/exec" "bufio" "os" "database/sql")
 import "github.com/lib/pq"
 // for using postgresql
 
@@ -42,9 +42,9 @@ func oldCred(photo string, name string, cc string) {
 
 	cmd := exec.Command("cd old; python test.py " + photo + name + cc)
 	fmt.Println("Creating new credencial: " + name + ".png")
-	if errV := cmd.Run(); errV != nil {
+	if errV := cmd.Run(); err != nil {
 		// It's better than Start bc it waits to the command to finish
-		log.Fatalf("Error: ", errV)
+		log.Fatalf("Error: ", err)
 	}
 	else {
 		fmt.Println("Done.")
@@ -63,6 +63,13 @@ func pdfCreateCred() {
 
 func dbManager() {
 	fmt.Println("postgresql interface")
+	connStr := "user=root dbname=pgCred " // later add " password=passwd sslmode=verify-full"
+	db, err := sql.Open("postgres " + connStr)
+	if err != nil {
+		log.Fatalf(err)
+	}
+	// Do stuff like querys
+	// db.Query("SELECT ")
 	/*
 	"pq" - go get github.com/lib/pq
 	*/

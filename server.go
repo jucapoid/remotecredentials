@@ -33,6 +33,23 @@ func saveInput(w http.ResponseWriter, r *http.Request) {
 	f.Close()
 }
 
+func HandleUpload(w http.ResponseWriter, req *http.Request) {
+    in, header, err := req.FormFile("file")
+    if err != nil {
+        log.FatalF("Error: ", err)
+    }
+    defer in.Close()
+    //you probably want to make sure header.Filename is unique and 
+    // use filepath.Join to put it somewhere else.
+    out, err := os.OpenFile(header.Filename, os.O_WRONLY, 0644)
+    if err != nil {
+        //handle error
+    }
+    defer out.Close()
+    io.Copy(out, in)
+    //do other stuff
+}
+
 func init() {
 	http.HandleFunc("/save", save)
 }
