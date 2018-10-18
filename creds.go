@@ -38,13 +38,11 @@ func oldCred(photo string, name string, cc string) {
 	// Pcmd := "python tests.py"
 	// args := ""
 	// cmd := Pcmd + args
-	// ou
-
-	cmd := exec.Command("cd old; python test.py " + photo + name + cc)
-	fmt.Println("Creating new credencial: " + name + ".png")
-	if errV := cmd.Run(); err != nil {
-		// It's better than Start bc it waits to the command to finish
-		log.Fatalf("Error: ", err)
+	// or
+	cmd := exec.Command("cd old; python credencias.py " + name + " cred" + name + ".png")
+	fmt.Println("Creating new credencial for " + name + " named cred" + name)
+	if errV := cmd.Run(); errV != nil {
+		log.Fatalf("Error: ", errV)  // It's better than Start bc it waits to the command to finish
 	}
 	else {
 		fmt.Println("Done.")
