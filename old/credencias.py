@@ -16,17 +16,18 @@ photo = "photo.jpg"
 name = "zeTeste"
 cc = "11227788"
 credN = photo + name
+fundo = "cred.png"
 # credN = sys.argv[1:3].join()
 
 
-img = PImage.open(photo)
+img = PImage.open(fundo)
 draw = ImageDraw.Draw(img)
 
 width, height = img.size
 
-# font = ImageFont.load("arial.pil")
-font = ImageFont.truetype("ariblk.ttf", 15)
-
+#font = ImageFont.load("arial.pil")
+#font = ImageFont.truetype("ariblk.ttf", 15)
+font = ImageFont.load_default()
 
 w, h = font.getsize("1")
 # acesso(1, 2, 3, 4, 5, 6, 7)
@@ -37,7 +38,7 @@ draw.rectangle(((30, 90), (140, 220)), fill="white", outline="white")
 # foto = Image.open(sys.argv[1])  # <---- input FOTO
 foto = PImage.open(photo)  # <---- input FOTO
 foto = foto.resize((115, 135))
-img.paste(foto, (30, 90, 145, 225))
+#img.paste(foto, (30, 90, 145, 225))
 
 draw.text((30, 250), "NOME:", (255, 255, 255), font=font)
 draw.rectangle(((30, 275), (255, 300)), fill="white", outline="white")
@@ -57,7 +58,7 @@ draw.text((30, height - 30), "QUEIMA.AAUE.PT", (255, 255, 255), font=font)
 qr = pyqrcode.create('A232T3QF2017')
 qr.png('qrcode.png', scale=3)
 
-qr = Image.open('qrcode.png')
+qr = PImage.open('qrcode.png')
 x, y = qr.size
 
 img.paste(qr, (0 + 49, 0 + 30 + 370, x + 49, y + 30 + 370))
@@ -70,19 +71,19 @@ img.save(name + ".png")
 
 
 draw.rectangle(((200, 170), (235, 205)), fill="red", outline="white")
-draw.text((200 + 13, 170 + 6), a1, (0, 0, 0), font=font, fill="black")
+draw.text((200 + 13, 170 + 6), "a1", (0, 0, 0), font=font)
 draw.rectangle(((235, 170), (270, 205)), fill="red", outline="white")
-draw.text((235 + 13, 170 + 6), a2, (0, 0, 0), font=font, fill="black")
+draw.text((235 + 13, 170 + 6), "a2", (0, 0, 0), font=font)
 draw.rectangle(((270, 170), (305, 205)), fill="red", outline="white")
-draw.text((270 + 13, 170 + 6), a3, (0, 0, 0), font=font, fill="black")
+draw.text((270 + 13, 170 + 6), "a3", (0, 0, 0), font=font)
 draw.rectangle(((305, 170), (340, 205)), fill="red", outline="white")
-draw.text((305 + 13, 170 + 6), a4, (0, 0, 0), font=font, fill="black")
+draw.text((305 + 13, 170 + 6), "a4", (0, 0, 0), font=font)
 draw.rectangle(((200 + 35 / 2, 205), (235 + 35 / 2, 240)), fill="red", outline="white")
-draw.text((200 + 35 / 2 + 13, 205 + 6), a5, (0, 0, 0), font=font, fill="black")
+draw.text((200 + 35 / 2 + 13, 205 + 6), "a5", (0, 0, 0), font=font)
 draw.rectangle(((235 + 35 / 2, 205), (270 + 35 / 2, 240)), fill="red", outline="white")
-draw.text((235 + 35 / 2 + 13, 205 + 6), a6, (0, 0, 0), font=font, fill="black")
+draw.text((235 + 35 / 2 + 13, 205 + 6), "a6", (0, 0, 0), font=font)
 draw.rectangle(((270 + 35 / 2, 205), (305 + 35 / 2, 240)), fill="red", outline="white")
-draw.text((270 + 35 / 2 + 13, 205 + 6), a7, (0, 0, 0), font=font, fill="black")
+draw.text((270 + 35 / 2 + 13, 205 + 6), "a7", (0, 0, 0), font=font)
 
 """
 def acesso(a1, a2, a3, a4, a5, a6, a7):
