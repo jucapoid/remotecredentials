@@ -1,6 +1,15 @@
 package creds
 
-import ("fmt" "image/draw" "image" "os/exec" "bufio" "os" "database/sql")
+import (
+	"fmt"
+	"log"
+	//"image/draw"
+	//"image"
+	"os/exec"
+	//"bufio"
+	//"os"
+	"database/sql")
+
 import "github.com/lib/pq"
 // for using postgresql
 
@@ -12,7 +21,7 @@ import "github.com/lib/pq"
 
 func main() {
 	// var name, cc, photo string  // For normal usage with fmt.Scanf
-	var name, cc, photo string = 'Ze Teste', '11227788', 'photo.jpg'
+	var name, cc, photo string = "Ze Teste", "11227788", "photo.jpg"
 	fmt.Println("Hello this does basicly nothing yet...")
 	//reader := bufio.NewReader(os.Stdin)  // Use this if fmt.Scanf still dosen't wait for input, this or the workaround for the fmt.Scanf
 	//name := reader.ReadString('\n')
@@ -51,7 +60,7 @@ func oldCred(photo string, name string, cc string) {
 
 
 func pdfCreateCred() {
-	fmt.Fprintf("Create pdf with cred from html")
+	fmt.Printf("Create pdf with cred from html")
 	/*
 	"gofpdf"  - go get github.com/jung-kurt/gofpdf
 	"wktml" gihub.com/SebastiaanKlippert/go-wkhtmltopdf  // Probably this one
@@ -62,7 +71,7 @@ func pdfCreateCred() {
 func dbManager() {
 	fmt.Println("postgresql interface")
 	connStr := "user=root dbname=pgCred " // later add " password=passwd sslmode=verify-full"
-	db, err := sql.Open("postgres " + connStr)
+	db, err := sql.Open("postgres ", connStr)
 	if err != nil {
 		log.Fatalf(err)
 	}

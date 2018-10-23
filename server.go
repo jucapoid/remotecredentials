@@ -1,6 +1,12 @@
-package server
+package creds
 
-import "net/http log fmt"
+import (
+	"io"
+	"log"
+	"net/http"
+	"net/http log fmt"
+	"os"
+)
 
 func server(photoCred) {
 	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(photoCred))))
@@ -14,23 +20,20 @@ Also serve an html and getforms to get input
 Probably would be a good idea to only run it on localhost
 */
 
-func saveInput(w http.ResponseWriter, r *http.Request) {
+func saveInput(w http.ResponseWriter, r *http.Request) (string, string) {
 	cc := r.FormValue("CC")
-	name, err := r.FormValue("Name")
+	name := r.FormValue("Name")
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-		return 1
+		return "1", "1"
 	}
 
 	// Not sure what to do here, probably upload it and save it on the db
-	f, err := os.Open("somefile.json")
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-		return 1
+		return "1", "1"
 	}
-
-	f.Write(b)
-	f.Close()
+	return cc, name
 }
 
 func HandleUpload(w http.ResponseWriter, req *http.Request) {
