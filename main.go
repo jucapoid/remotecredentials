@@ -1,14 +1,13 @@
-package creds
+package main
 
 import (
 	"io"
 	"log"
 	"net/http"
-	"net/http log fmt"
 	"os"
 )
 
-func server(photoCred) {
+func main(photoCred) {
 	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(photoCred))))
 	if err := http.ListenAndServe(":8081", nil); err != nil {
 		log.Fatal("ListenAndServe: ", err)
