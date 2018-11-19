@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+
+	//"log"
 	"net/http"
 	"strings"
-	"strconv"
+	//"strconv"
 	// "database/sql" // Sql import
-	"io"  // For file usage
+	//"io"  // For file usage
 )
 
 /*
@@ -16,10 +18,10 @@ Change prints to log
 */
 
 
-func setMyCookie(w http.ResponseWriter) {
+/*func setMyCookie(w http.ResponseWriter) {
 	cookie := http.Cookie(Name:"testCookie", Value:"testValue")
 	http.SetCookie(w, &cookie)
-}
+}*/
 
 
 func aboutPage(w http.ResponseWriter, r *http.Request) {
@@ -44,11 +46,11 @@ func sayhelloName(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func handleUpload(w http.ResponseWriter, r *http.Request) {
+/*func handleUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method == 'POST'{
 		
 	}
-}
+}*/
 
 func login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("method:", r.Method) //get request method
@@ -60,32 +62,32 @@ func login(w http.ResponseWriter, r *http.Request) {
 		// logic part of log in
 		fmt.Println("username:", r.Form["username"])
 		fmt.Println("password:", r.Form["password"])
-		if len(r.Form["username"]) > 0 && len(r.Form["password"]) > 0 {
-			login(w http.ResponseWriter, r *http.Request)
+		/*if len(r.Form["username"]) > 0 && len(r.Form["password"]) > 0 {
+			login(w, r)
 			// or
-			sayhelloName()
-		}
+			sayhelloName(w, r)
+		}*/
 	}
 }
 
 
 func main() {
-	portstring := strconv.Itoa('8081')
-	mux := http.NewServeMux()
-	// With a multiplexer DoS will be harder
-	mux.Handle("/",http.HandleFunc(sayhelloName))
-	mux.Handle("/login/",http.HandleFunc(login))         // set router
-	mux.Handle("/cred/",http.HandleFunc(cred))           // Login must always come first
-	mux.Handle("/about/", http.HandleFunc(aboutPage))
-	mux.Handle(http.NotFoundHandle(), http.HandleFunc(aboutPage))
-/*
+	/*	portstring := strconv.Itoa('8081')
+		mux := http.NewServeMux()
+		// With a multiplexer DoS will be harder
+		mux.Handle("/",http.HandleFunc(sayhelloName))
+		mux.Handle("/login/",http.HandleFunc(login))         // set router
+		mux.Handle("/cred/",http.HandleFunc(cred))           // Login must always come first
+		mux.Handle("/about/", http.HandleFunc(aboutPage))
+		mux.Handle(http.NotFoundHandle(), http.HandleFunc(aboutPage))
+		*/
 	http.HandleFunc("/", sayhelloName)
 	http.HandleFunc("/login", login)         // set router
-	http.HandleFunc("/cred", cred)           // Login must always come first
+	//http.HandleFunc("/cred", cred)           // Login must always come first
 	err := http.ListenAndServe(":8081", nil) // set listen port
 	fmt.Println("Server up")
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
-*/
+
 }
