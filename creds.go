@@ -1,4 +1,4 @@
-package creds
+package main
 
 import (
 	"fmt"
@@ -8,7 +8,8 @@ import (
 	"os/exec"
 	//"bufio"
 	//"os"
-	"database/sql")
+	//"database/sql"
+)
 
 import "github.com/lib/pq"
 // for using postgresql

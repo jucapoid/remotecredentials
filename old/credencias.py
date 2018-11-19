@@ -6,7 +6,6 @@ from tkinter import *
 import pyqrcode, sys
 import PIL.Image as PImage
 
-"""
 photo = sys.argv[1]
 name = sys.argv[2]
 cc = sys.argv[3]
@@ -17,6 +16,7 @@ name = "zeTeste"
 cc = "11227788"
 credN = photo + name
 fundo = "cred.png"
+"""
 # credN = sys.argv[1:3].join()
 
 
@@ -25,8 +25,8 @@ draw = ImageDraw.Draw(img)
 
 width, height = img.size
 
-#font = ImageFont.load("arial.pil")
-#font = ImageFont.truetype("ariblk.ttf", 15)
+# font = ImageFont.load("arial.pil")
+# font = ImageFont.truetype("ariblk.ttf", 15)
 font = ImageFont.load_default()
 
 w, h = font.getsize("1")
@@ -38,7 +38,8 @@ draw.rectangle(((30, 90), (140, 220)), fill="white", outline="white")
 # foto = Image.open(sys.argv[1])  # <---- input FOTO
 foto = PImage.open(photo)  # <---- input FOTO
 foto = foto.resize((115, 135))
-#img.paste(foto, (30, 90, 145, 225))
+
+# img.paste(foto, (30, 90, 145, 225))
 
 draw.text((30, 250), "NOME:", (255, 255, 255), font=font)
 draw.rectangle(((30, 275), (255, 300)), fill="white", outline="white")
@@ -65,7 +66,7 @@ img.paste(qr, (0 + 49, 0 + 30 + 370, x + 49, y + 30 + 370))
 
 
 draw.rectangle(((33, height - 55), (35 + 130, height - 30)), fill="white", outline="white")
-draw.text((37, height - 54), 'A232T3QF2017', (0, 0, 0), font=font)  # nao se esta parte e fixa ou nao
+draw.text((37, height - 54), 'A232T3QF2017', (0, 0, 0), font=font)  # is this a constant?
 
 img.save(name + ".png")
 
