@@ -26,6 +26,22 @@ func aboutPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi\nThis is a credencials generator for AAUE") // Add links to the rest of the pages
 }
 
+func credform(w http.ResponseWriter, r *http.Request){
+	fmt.Println("method:", r.Method)
+	if r.Method == "GET" {
+		t, err := template.ParseFiles("./test/templates/credform.html")
+		if err != nil {
+			fmt.Println(err) // Ugly debug output
+			w.WriteHeader(http.StatusInternalServerError) // Proper HTTP response
+			return
+		}
+		t.Execute(w, nil)
+	} else {
+		r.ParseForm()
+	}
+}
+
+
 func sayhelloName(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()       // parse arguments, you have to call this by yourself
 	fmt.Println(r.Form) // print form information in server side
@@ -65,11 +81,15 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 func login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("method:", r.Method) //get request method
 	if r.Method == "GET" {
-		t, _ := template.ParseFiles("login.html")
+		t, _ := template.ParseFiles("./test/templates/login.html")
 		t.Execute(w, nil)
 	} else {
 		r.ParseForm()
 		// logic part of log in
+		if len(r.Form["username"])>0 && len(r.Form["password"])>0{
+			//set login cookie
+			sayhelloName(w, r)
+		}
 		fmt.Println("username:", r.Form["username"])
 		fmt.Println("password:", r.Form["password"])
 		if len(r.Form["username"]) > 0 && len(r.Form["password"]) > 0 {
@@ -91,8 +111,9 @@ func main() {
 	http.HandleFunc("/", sayhelloName)
 	http.HandleFunc("/login/", login) // set router
 	http.HandleFunc("/about/", aboutPage)
+	http.HandleFunc("/cred/", credform)
 	//http.HandleFunc("/cred", cred)           // Login must always come first
-	err := http.ListenAndServe(":8081", nil) // set listen port
+	err := http.ListenAndServe(":9090", nil) // set listen port
 	fmt.Println("Server up")
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

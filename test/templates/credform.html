@@ -1,0 +1,45 @@
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+    <form action="/credform" method="post">
+        <table style="width: 30%;">
+            <tr>
+                <td>Nome:</td>
+                <td><input type="text" name="nome"></td>
+            </tr>
+            <tr>
+                <td>CC/Matricula/Data:</td><td><input type="text" name="cc"></td>
+            </tr>
+            <tr>
+                <td>Tipo de Utilizador:</td>
+                <td>
+                    <select style="width: 90%">
+                        <option value="aaue">AAUE</option>
+                        <option value="nucleos">Núcleos</option>
+                        <option value="servicos">Serviços</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td rowspan="2">Zonas:</td>
+                <td align="center">
+                    1<input type="checkbox" name="z1" value="1">
+                    2<input type="checkbox" name="z2" value="2">
+                    3<input type="checkbox" name="z3" value="3">
+                    4<input type="checkbox" name="z4" value="4">
+                    5<input type="checkbox" name="z5" value="5">
+                </td>
+            </tr>
+            <tr>
+                <td align="center">
+                    6<input type="checkbox" name="z6" value="6">
+                    7<input type="checkbox" name="z7" value="7">
+                    8<input type="checkbox" name="z8" value="8">
+                </td>
+            </tr>
+        </table>
+    </form>
+</body>
+</html>
