@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time" // For cookie but could also serve timestamp on pages
 
-	_ "github.com/lib/pq"
+	//_ "github.com/lib/pq"
 )
 
 /*
@@ -43,7 +43,7 @@ func NewManager(provideName, cookieName string, maxlifetime int64) (*CookieForm,
 */
 
 func aboutPage(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("./test/templates/about.html")
+	t, err := template.ParseFiles("./templates/about.html")
 	if err != nil {
 		fmt.Println(err)                              // Ugly debug output
 		w.WriteHeader(http.StatusInternalServerError) // Proper HTTP response
@@ -56,7 +56,7 @@ func aboutPage(w http.ResponseWriter, r *http.Request) {
 func credform(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("method:", r.Method)
 	if r.Method == "GET" {
-		t, err := template.ParseFiles("./test/templates/credform.html")
+		t, err := template.ParseFiles("./templates/credform.html")
 		if err != nil {
 			fmt.Println(err)                              // Ugly debug output
 			w.WriteHeader(http.StatusInternalServerError) // Proper HTTP response
@@ -121,7 +121,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 func login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("method:", r.Method) //get request method
 	if r.Method == "GET" {
-		t, _ := template.ParseFiles("./test/templates/login.html")
+		t, _ := template.ParseFiles("./templates/login.html")
 		t.Execute(w, nil)
 	} else {
 		r.ParseForm()
