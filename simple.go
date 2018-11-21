@@ -42,28 +42,20 @@ func NewManager(provideName, cookieName string, maxlifetime int64) (*CookieForm,
 */
 
 func aboutPage(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("./templates/about.html")
-	if err != nil {
-		fmt.Println(err)                              // Ugly debug output
-		w.WriteHeader(http.StatusInternalServerError) // Proper HTTP response
-		return
-	}
+	t, _ := template.ParseFiles("./templates/about.html")
 	t.Execute(w, nil)
 	//fmt.Fprintf(w, "Hi\nThis is a credencials generator for AAUE") // Add links to the rest of the pages
 }
 
-func credform(w http.ResponseWriter, r *http.Request) {
+func cred(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("===================================")
 	fmt.Println("method:", r.Method)
 	if r.Method == "GET" {
-		t, err := template.ParseFiles("./templates/credform.html")
-		if err != nil {
-			fmt.Println(err)                              // Ugly debug output
-			w.WriteHeader(http.StatusInternalServerError) // Proper HTTP response
-			return
-		}
+		t, _ := template.ParseFiles("./templates/credform.html")
 		t.Execute(w, nil)
 	} else {
 		r.ParseForm() // acesso should be a map
+
 	}
 }
 
@@ -126,9 +118,9 @@ func login(w http.ResponseWriter, r *http.Request) {
 		// logic part of log in
 		fmt.Println("username:", r.Form["username"])
 		fmt.Println("password:", r.Form["password"])
-		if len(r.Form["username"]) > 0 && len(r.Form["password"]) > 0 {
+		/*if len(r.Form["username"]) > 0 && len(r.Form["password"]) > 0 {
 			sayhelloName(w, r)
-		}
+		}*/
 	}
 }
 
@@ -144,7 +136,7 @@ func oldCred(photo string, name string, cc string) string {
 	if errV := cmd.Run(); errV != nil {
 		log.Fatalf("Error: ", errV) // It's better than Start bc it waits to the command to finish
 	}
-	return (photo + name + '.png')
+	return (photo + name + ".png")
 }
 
 func main() {
@@ -160,7 +152,7 @@ func main() {
 	http.HandleFunc("/", sayhelloName)
 	http.HandleFunc("/login/", login) // set router
 	http.HandleFunc("/about/", aboutPage)
-	http.HandleFunc("/cred/", credform)
+	http.HandleFunc("/cred/", cred)
 	//http.HandleFunc("/cred", cred)           // Login must always come first
 	err := http.ListenAndServe(":9090", nil) // set listen port
 	fmt.Println("Server up")

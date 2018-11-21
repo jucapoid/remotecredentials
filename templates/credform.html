@@ -3,7 +3,7 @@
     <title></title>
 </head>
 <body>
-    <form action="/credform" method="post">
+    <form action="/cred/" method="post">
         <table style="width: 30%;">
             <tr>
                 <td>Nome:</td>
@@ -15,7 +15,7 @@
             <tr>
                 <td>Tipo de Utilizador:</td>
                 <td>
-                    <select style="width: 90%">
+                    <select style="width: 90%" name="tipo">
                         <option value="aaue">AAUE</option>
                         <option value="nucleos">Núcleos</option>
                         <option value="servicos">Serviços</option>
@@ -38,6 +38,10 @@
                     7<input type="checkbox" name="z7" value="7">
                     8<input type="checkbox" name="z8" value="8">
                 </td>
+            </tr>
+            <tr>
+                <td>Imagem:</td>
+                <td><input type="file" name="photo"></td>
             </tr>
         </table>
         <input type="submit" value="Submit">

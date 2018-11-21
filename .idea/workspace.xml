@@ -2,18 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="27526e08-98f9-4f78-b2ab-f037a8edea5a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/serverTest/serverTest.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/simpleHttpServer/UsefullLinks" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/simpleHttpServer/simpleHttpServer.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/webserverTest.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/creds.go" beforeDir="false" afterPath="$PROJECT_DIR$/creds.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/old/credencias.py" beforeDir="false" afterPath="$PROJECT_DIR$/old/credencias.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/old/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/old/test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/simple.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/simple.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simple.go" beforeDir="false" afterPath="$PROJECT_DIR$/simple.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/about.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/about.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/credform.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/credform.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/login.html" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -104,62 +97,75 @@
         </counts>
       </usages-collector>
     </session>
+    <session id="821451268">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="1" />
+          <entry key="project.open.time.27" value="1" />
+          <entry key="project.opened" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="go" value="97" />
+          <entry key="html" value="68" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="Go" value="97" />
+          <entry key="HTML" value="68" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="html" value="4" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="HTML" value="4" />
+        </counts>
+      </usages-collector>
+    </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/creds.go">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/simple.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
-              <caret line="35" column="2" selection-start-line="35" selection-start-column="2" selection-end-line="35" selection-end-column="2" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/server.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1320">
-              <caret line="97" selection-start-line="97" selection-end-line="97" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/simpleHttpServer/simpleHttpServer.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="14" column="25" selection-start-line="14" selection-start-column="25" selection-end-line="14" selection-end-column="25" />
+            <state relative-caret-position="175">
+              <caret line="154" column="34" lean-forward="true" selection-start-line="154" selection-start-column="34" selection-end-line="154" selection-end-column="34" />
               <folding>
-                <element signature="e#14#70#0" expanded="true" />
+                <element signature="e#14#208#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/test/simple.go">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/templates/login.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="169">
-              <caret line="46" column="26" lean-forward="true" selection-start-line="46" selection-start-column="26" selection-end-line="46" selection-end-column="26" />
+            <state relative-caret-position="75">
+              <caret line="5" column="29" selection-start-line="5" selection-start-column="29" selection-end-line="5" selection-end-column="29" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/serverTest/serverTest.go">
+        <entry file="file://$PROJECT_DIR$/templates/credform.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="14" selection-start-line="14" selection-end-line="14" />
+            <state relative-caret-position="75">
+              <caret line="5" column="23" selection-start-line="5" selection-start-column="23" selection-end-line="5" selection-end-column="23" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/webserverTest.go">
+        <entry file="file://$PROJECT_DIR$/templates/about.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1770">
-              <caret line="126" column="25" selection-start-line="126" selection-start-column="25" selection-end-line="126" selection-end-column="25" />
+            <state relative-caret-position="150">
+              <caret line="10" column="26" selection-start-line="10" selection-start-column="26" selection-end-line="10" selection-end-column="26" />
             </state>
           </provider>
         </entry>
@@ -193,6 +199,10 @@
         <option value="$PROJECT_DIR$/serverTest/serverTest.go" />
         <option value="$PROJECT_DIR$/simpleHttpServer/simpleHttpServer.go" />
         <option value="$PROJECT_DIR$/test/simple.go" />
+        <option value="$PROJECT_DIR$/templates/about.html" />
+        <option value="$PROJECT_DIR$/templates/login.html" />
+        <option value="$PROJECT_DIR$/templates/credform.html" />
+        <option value="$PROJECT_DIR$/simple.go" />
       </list>
     </option>
   </component>
@@ -202,11 +212,11 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="8" />
-    <option name="y" value="48" />
-    <option name="width" value="1340" />
-    <option name="height" value="700" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="6" />
+    <option name="y" value="44" />
+    <option name="width" value="1324" />
+    <option name="height" value="694" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -214,6 +224,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -229,23 +240,12 @@
             <path>
               <item name="remotecredentials" type="b2602c69:ProjectViewProjectNode" />
               <item name="remotecredentials" type="462c0819:PsiDirectoryNode" />
-              <item name="serverTest" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="remotecredentials" type="b2602c69:ProjectViewProjectNode" />
-              <item name="remotecredentials" type="462c0819:PsiDirectoryNode" />
-              <item name="simpleHttpServer" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="remotecredentials" type="b2602c69:ProjectViewProjectNode" />
-              <item name="remotecredentials" type="462c0819:PsiDirectoryNode" />
-              <item name="test" type="462c0819:PsiDirectoryNode" />
+              <item name="templates" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -272,7 +272,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Go Build.go build serverTest.go">
+  <component name="RunManager" selected="Go Build.go build simple.go">
     <configuration name="go build serverTest.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="remotecredentials" />
       <working_directory value="$PROJECT_DIR$/" />
@@ -289,28 +289,39 @@
       <directory value="$PROJECT_DIR$/" />
       <method v="2" />
     </configuration>
+    <configuration name="go build simple.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="remotecredentials" />
+      <working_directory value="$PROJECT_DIR$/" />
+      <kind value="FILE" />
+      <filePath value="$PROJECT_DIR$/simple.go" />
+      <package value="remotecredentials" />
+      <directory value="$PROJECT_DIR$/" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Go Build.go build serverTest.go" />
       <item itemvalue="Go Build.go build simpleHttpServer.go" />
+      <item itemvalue="Go Build.go build simple.go" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Build.go build simple.go" />
         <item itemvalue="Go Build.go build serverTest.go" />
         <item itemvalue="Go Build.go build simpleHttpServer.go" />
       </list>
     </recent_temporary>
   </component>
   <component name="ToolWindowManager">
-    <frame x="8" y="48" width="1340" height="700" extended-state="0" />
+    <frame x="-1" y="0" width="1368" height="741" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.17774343" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.17145015" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.3281787" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.39952344" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.3281787" />
+      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.3983871" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -339,48 +350,40 @@
     </entry>
     <entry file="file:///usr/lib/go/src/runtime/panic.go" />
     <entry file="file:///usr/lib/go/src/net/http/server.go" />
-    <entry file="file://$PROJECT_DIR$/creds.go">
+    <entry file="file://$PROJECT_DIR$/creds.go" />
+    <entry file="file://$PROJECT_DIR$/server.go" />
+    <entry file="file://$PROJECT_DIR$/simpleHttpServer/simpleHttpServer.go" />
+    <entry file="file://$PROJECT_DIR$/serverTest/serverTest.go" />
+    <entry file="file://$PROJECT_DIR$/webserverTest.go" />
+    <entry file="file://$PROJECT_DIR$/test/simple.go" />
+    <entry file="file://$PROJECT_DIR$/templates/about.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="35" column="2" selection-start-line="35" selection-start-column="2" selection-end-line="35" selection-end-column="2" />
+        <state relative-caret-position="150">
+          <caret line="10" column="26" selection-start-line="10" selection-start-column="26" selection-end-line="10" selection-end-column="26" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/server.go">
+    <entry file="file://$PROJECT_DIR$/templates/login.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1320">
-          <caret line="97" selection-start-line="97" selection-end-line="97" />
+        <state relative-caret-position="75">
+          <caret line="5" column="29" selection-start-line="5" selection-start-column="29" selection-end-line="5" selection-end-column="29" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/simpleHttpServer/simpleHttpServer.go">
+    <entry file="file://$PROJECT_DIR$/templates/credform.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="14" column="25" selection-start-line="14" selection-start-column="25" selection-end-line="14" selection-end-column="25" />
+        <state relative-caret-position="75">
+          <caret line="5" column="23" selection-start-line="5" selection-start-column="23" selection-end-line="5" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/simple.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="175">
+          <caret line="154" column="34" lean-forward="true" selection-start-line="154" selection-start-column="34" selection-end-line="154" selection-end-column="34" />
           <folding>
-            <element signature="e#14#70#0" expanded="true" />
+            <element signature="e#14#208#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/serverTest/serverTest.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="14" selection-start-line="14" selection-end-line="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/webserverTest.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1770">
-          <caret line="126" column="25" selection-start-line="126" selection-start-column="25" selection-end-line="126" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test/simple.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="169">
-          <caret line="46" column="26" lean-forward="true" selection-start-line="46" selection-start-column="26" selection-end-line="46" selection-end-column="26" />
         </state>
       </provider>
     </entry>
