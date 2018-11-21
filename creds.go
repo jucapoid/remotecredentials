@@ -37,11 +37,6 @@ func main() {
 	oldCred(photo, name, cc)
 }
 
-func creds() {
-	fmt.Println("This hasn't been written yet...")
-}
-
-
 func oldCred(photo string, name string, cc string) {
 	// Just for now so that something can be presented
 	// foto.png must be named with the name or have the name an extra
@@ -58,7 +53,6 @@ func oldCred(photo string, name string, cc string) {
 		fmt.Println("Done.")
 	}
 }
-
 
 func pdfCreateCred() {
 	fmt.Printf("Create pdf with cred from html")
