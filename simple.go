@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"strings"
 	"time" // For cookie but could also serve timestamp on pages
-
 	//_ "github.com/lib/pq"
 )
 
@@ -64,7 +63,7 @@ func credform(w http.ResponseWriter, r *http.Request) {
 		}
 		t.Execute(w, nil)
 	} else {
-		r.ParseForm()  // acesso should be a map
+		r.ParseForm() // acesso should be a map
 	}
 }
 
@@ -100,7 +99,7 @@ func sayhelloName(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleUpload(w http.ResponseWriter, r *http.Request) {
-	in, header, err := r.FormFile("file")
+	in, header, err := r.FormFile("photo")
 	errCount := 0
 	if err != nil {
 		log.Fatalf("Error: ", err)
@@ -115,7 +114,6 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer out.Close()
 	io.Copy(out, in)
-	// do other stuff
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -141,12 +139,12 @@ func oldCred(photo string, name string, cc string) string {
 	// args := ""
 	// cmd := Pcmd + args
 	// or
-	cmd := exec.Command("cd ../old; python credencias.py " + name + " cred" + name + ".png")
+	cmd := exec.Command("cd old; python credencias.py " + name + " cred" + name + ".png")
 	fmt.Println("Creating new credencial for " + name + " named cred" + name)
 	if errV := cmd.Run(); errV != nil {
-		log.Fatalf("Error: ", errV)  // It's better than Start bc it waits to the command to finish
+		log.Fatalf("Error: ", errV) // It's better than Start bc it waits to the command to finish
 	}
-	return (photo + name)
+	return (photo + name + '.png')
 }
 
 func main() {
