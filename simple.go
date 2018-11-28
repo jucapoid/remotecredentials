@@ -10,27 +10,46 @@ import (
 	"os/exec"
 	"strings"
 	"time" // For cookie but could also serve timestamp on pages
-	//_ "github.com/lib/pq"
+	// _ "github.com/lib/pq"
+	// "github.com/satori/go.uuid"
+	// "github.com/nu7hatch/gouuid"
 )
+// get libs
+// go get github.com/lib/pq
+// go get github.com/satori/go.uuid
+// or
+// go get github.com/nu7hatch/gouuid
 
 /*
 Change prints to log
 Put everything working with mutexes
+Cookie and not session bc cookies are pressistent
 */
 
+
+func MyCookie(w http.ResponseWriter, r *http.Request) {
+	// get req and check if it has cookie if not serve a new cookie
+	req, err := r.Cookie("AAUEremotecredencials")
+	if err != nil {
+		id, _ := uuid.NewV4()
+		// use crypto/hmac
+		cookie := http.Cookie{
+								Name: "AAUEremotecredencials",
+								Value: id.String()
+		}  // No maxAge, makes cookie ageless		
+			// Domain: "aauecred.net"  // set on /etc/hosts
+	}
+	http.SetCookie(w, &cookie)
+}
+
+/*
 type CookieForm struct {
 	Name string
 	//lock     sync.Mutex // Not yet
 	lifeTime int64
 }
 
-func setMyCookie(w http.ResponseWriter) {
-	expiration := time.Now().Add(24 * time.Hour)
-	cookie := http.Cookie{Name: "AAUEremotecredencials", Value: "testValue", Expires: expiration}
-	http.SetCookie(w, &cookie)
-}
 
-/*
 //func NewManager(cookieName string, maxlifetime int64) (*CookieForm, error) {
 func NewManager(provideName, cookieName string, maxlifetime int64) (*CookieForm, error){
 	provider, ok := provides[provideName]
@@ -42,20 +61,29 @@ func NewManager(provideName, cookieName string, maxlifetime int64) (*CookieForm,
 */
 
 func aboutPage(w http.ResponseWriter, r *http.Request) {
+	MyCookie(w, r)
 	t, _ := template.ParseFiles("./templates/about.html")
 	t.Execute(w, nil)
 	//fmt.Fprintf(w, "Hi\nThis is a credencials generator for AAUE") // Add links to the rest of the pages
 }
 
 func cred(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("===================================")
 	fmt.Println("method:", r.Method)
 	if r.Method == "GET" {
 		t, _ := template.ParseFiles("./templates/credform.html")
 		t.Execute(w, nil)
 	} else {
 		r.ParseForm() // acesso should be a map
-
+		name := r.Form["nome"]
+		cc := r.Form["cc"]
+		tipo := r.Form["tipo"]
+		acessoA []string
+		for k, v := range r.Form {
+			if (k[0] == 'z' ) {
+				break // for now
+			}
+			acessoA := []  // values?
+		}
 	}
 }
 
@@ -78,7 +106,7 @@ func sayhelloName(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Form) // print form information in server side
 	fmt.Println("path", r.URL.Path)
 	fmt.Println("scheme", r.URL.Scheme)
-	fmt.Println(r.Form["url_long"])
+	fmt.Println(r.Form["url_long"])  // why?
 	var name string
 	for k, v := range r.Form {
 		fmt.Println(r.Form)
@@ -100,12 +128,14 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	defer in.Close()
 	// you probably want to make sure header.Filename is unique and
 	// use filepath.Join to put it somewhere else.
+	// Should first check if file already exists
 	out, err := os.OpenFile(header.Filename, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		errCount += 1
 	}
 	defer out.Close()
 	io.Copy(out, in)
+	fmt.Println()
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +166,7 @@ func oldCred(photo string, name string, cc string) string {
 	if errV := cmd.Run(); errV != nil {
 		log.Fatalf("Error: ", errV) // It's better than Start bc it waits to the command to finish
 	}
-	return (photo + name + ".png")
+	return photo + name + ".png"
 }
 
 func main() {
@@ -150,7 +180,7 @@ func main() {
 		mux.Handle(http.NotFoundHandle(), http.HandleFunc(aboutPage))
 	*/
 	http.HandleFunc("/", sayhelloName)
-	http.HandleFunc("/login/", login) // set router
+	http.HandleFunc("/login/", login) // Lookup some more advanced routing
 	http.HandleFunc("/about/", aboutPage)
 	http.HandleFunc("/cred/", cred)
 	//http.HandleFunc("/cred", cred)           // Login must always come first
