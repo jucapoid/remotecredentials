@@ -22,8 +22,11 @@ import (
 
 /*
 Change prints to log
-Put everything working with mutexes
+Put routing with a routing lib
+Get a ssl crt
 Cookie and not session bc cookies are pressistent
+Https / http1.1
+XSS protection?
 */
 
 
@@ -36,10 +39,11 @@ func MyCookie(w http.ResponseWriter, r *http.Request) {
 		cookie := http.Cookie{
 								Name: "AAUEremotecredencials",
 								Value: id.String()
-		}  // No maxAge, makes cookie ageless		
+		}  // No maxAge, makes cookie ageless
 			// Domain: "aauecred.net"  // set on /etc/hosts
 	}
 	http.SetCookie(w, &cookie)
+	// login
 }
 
 /*
@@ -61,31 +65,44 @@ func NewManager(provideName, cookieName string, maxlifetime int64) (*CookieForm,
 */
 
 func aboutPage(w http.ResponseWriter, r *http.Request) {
-	MyCookie(w, r)
-	t, _ := template.ParseFiles("./templates/about.html")
-	t.Execute(w, nil)
-	//fmt.Fprintf(w, "Hi\nThis is a credencials generator for AAUE") // Add links to the rest of the pages
+	req, err := r.Cookie("AAUEremotecredencials")
+	if err != nil {
+		t, _ := template.ParseFiles("./templates/about.html")
+		t.Execute(w, nil)
+	} else {
+		login(w, r)
+	}
 }
 
 func cred(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("method:", r.Method)
-	if r.Method == "GET" {
-		t, _ := template.ParseFiles("./templates/credform.html")
-		t.Execute(w, nil)
-	} else {
-		r.ParseForm() // acesso should be a map
-		name := r.Form["nome"]
-		cc := r.Form["cc"]
-		tipo := r.Form["tipo"]
-		acessoA []string
-		for k, v := range r.Form {
-			if (k[0] == 'z' ) {
-				break // for now
+	req, err := r.Cookie("AAUEremotecredencials")
+	if err != nil {
+		fmt.Println("method:", r.Method)
+		if r.Method == "GET" {
+			t, _ := template.ParseFiles("./templates/credform.html")
+			t.Execute(w, nil)
+		} else {
+			r.ParseForm() // acesso map or slice?
+			name := r.Form["nome"]
+			cc := r.Form["cc"]
+			tipo := r.Form["tipo"]
+			acessoA = [8]string
+			for k, v := range r.Form {
+				if (k[0] == 'z' ) {
+					break // for now
+				}
+				acessoA := []  // values?
 			}
-			acessoA := []  // values?
+			for (i := 0; i < 8; i++) {
+				break
+				// append to acessoA the form value of z + strconv(i)
+			}
 		}
+	} else {
+		login(w, r)
 	}
 }
+
 
 /*
 func dbManager(q string) {
@@ -101,7 +118,7 @@ func dbManager(q string) {
 }
 */
 
-func sayhelloName(w http.ResponseWriter, r *http.Request) {
+func sayhelloName(w http.ResponseWriter, r *http.Request) {  // 
 	r.ParseForm()       // parse arguments, you have to call this by yourself
 	fmt.Println(r.Form) // print form information in server side
 	fmt.Println("path", r.URL.Path)
@@ -152,6 +169,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 			sayhelloName(w, r)
 		}*/
 	}
+	// Serve cookie for auth
 }
 
 func oldCred(photo string, name string, cc string) string {
