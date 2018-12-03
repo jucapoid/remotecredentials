@@ -13,9 +13,11 @@ import (
 	// _ "github.com/lib/pq"
 	// "github.com/satori/go.uuid"
 	// "github.com/nu7hatch/gouuid"
+	"github.com/julienschmidt/httprouter"
 )
 // get libs
 // go get github.com/lib/pq
+// go get github.com/julienschmidt/httprouter
 // go get github.com/satori/go.uuid
 // or
 // go get github.com/nu7hatch/gouuid
@@ -43,7 +45,20 @@ func MyCookie(w http.ResponseWriter, r *http.Request) {
 			// Domain: "aauecred.net"  // set on /etc/hosts
 	}
 	http.SetCookie(w, &cookie)
-	// login
+	// force to load login
+}
+
+
+func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		user, password, hasAuth := r.BasicAuth()
+		if hasAuth && user == requiredUser && password == requiredPassword {
+			h(w, r, ps)
+		} else {
+			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		}
+	}
 }
 
 /*
@@ -89,13 +104,10 @@ func cred(w http.ResponseWriter, r *http.Request) {
 			acessoA = [8]string
 			for k, v := range r.Form {
 				if (k[0] == 'z' ) {
-					break // for now
+					break
 				}
 				acessoA := []  // values?
-			}
-			for (i := 0; i < 8; i++) {
-				break
-				// append to acessoA the form value of z + strconv(i)
+				// a = append(a, x)
 			}
 		}
 	} else {
@@ -197,15 +209,27 @@ func main() {
 		mux.Handle("/about/", http.HandleFunc(aboutPage))
 		mux.Handle(http.NotFoundHandle(), http.HandleFunc(aboutPage))
 	*/
+	/*
 	http.HandleFunc("/", sayhelloName)
 	http.HandleFunc("/login/", login) // Lookup some more advanced routing
 	http.HandleFunc("/about/", aboutPage)
 	http.HandleFunc("/cred/", cred)
 	//http.HandleFunc("/cred", cred)           // Login must always come first
 	err := http.ListenAndServe(":9090", nil) // set listen port
+	*/
+	user := 'root'
+	password := 'toor'  // for now later be kept in a secured format
+
+	router  := httprouter.New()
+	router.GET("/", sayhelloName, BasicAuth(Protected, user, pass))
+	router.GET("/login/", login, BasicAuth(Protected, user, pass))
+	router.GET("/about/", aboutPage, BasicAuth(Protected, user, pass))
+	router.GET("/cred/", cred, BasicAuth(Protected, user, pass))
+	// Cookies must be checked
+
+	log.Fatal(http.ListenAndServe(":8080", router))
 	fmt.Println("Server up")
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
-
 }
