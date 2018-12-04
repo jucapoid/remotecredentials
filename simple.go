@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os" // For file storing
 	"os/exec"
 	"strings"
@@ -66,7 +67,7 @@ func MyCookie(w http.ResponseWriter, r *http.Request) {
 								Name: "AAUEremotecredencials",
 								Domain: "aaue.",
 								Value: id.String(),
-								Expires: expiration
+								Expires: expiration}  // No maxAge, makes cookie ageless
 		}  // No maxAge, makes cookie ageless
 			// Domain: "aauecred.net"  // set on /etc/hosts
 	}
@@ -80,7 +81,7 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 		manager.lock.Lock()
 		defer manager.lock.Unlock()
 		cookie, err := r.Cookie(manager.cookieName)
-		if (err != nil || cookie.Value == "") {
+		if err != nil || cookie.Value == "" {
 			sid := manager.sessionId()
 			session, _ = manager.provider.SessionInit(sid)
 			cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxlifetime)}  // HttpOnly: false
@@ -94,7 +95,7 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 
 //func NewManager(cookieName string, maxlifetime int64) (*CookieForm, error) {
 func NewManager(provideName, cookieName string, maxlifetime int64) (*CookieForm, error){
-	provider, ok := provides[provideName]
+	_, ok := provides[provideName]
 	if !ok {
 		return nil, fmt.Errorf("session: unknown provide %q (forgotten import?)", provideName)
 	}
@@ -102,7 +103,7 @@ func NewManager(provideName, cookieName string, maxlifetime int64) (*CookieForm,
 }  // I think we need to remove this
 
 func aboutPage(w http.ResponseWriter, r *http.Request) {
-	req, err := r.Cookie("AAUEremotecredencials")
+	_, err := r.Cookie("AAUEremotecredencials")
 	if err != nil {
 		t, _ := template.ParseFiles("./templates/about.html")
 		t.Execute(w, nil)
