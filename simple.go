@@ -11,8 +11,7 @@ import (
 	"os/exec"
 	"strings"
 	"time" // For cookie but could also serve timestamp on pages
-	
-	// "crypto/hmac"
+	//"crypto/hmac"
 	// _ "github.com/lib/pq"
 	// "github.com/satori/go.uuid"
 	// "github.com/nu7hatch/gouuid"
@@ -59,7 +58,7 @@ func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httpr
 
 func MyCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get req and check if it has cookie if not serve a new cookie
-	req, err := r.Cookie("AAUEremotecredencials")
+	_, err := r.Cookie("AAUEremotecredencials")
 	if err != nil {
 		id, _ := uuid.NewV4()
 		// use crypto/hmac to make sure that no cookies can be messed arround with
@@ -69,7 +68,6 @@ func MyCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 								Domain: "aaue.",
 								Value: id.String(),
 								Expires: expiration}  // No maxAge, makes cookie ageless
-		}  // No maxAge, makes cookie ageless
 			// Domain: "aauecred.net"  // set on /etc/hosts
 	}
 	http.SetCookie(w, &cookie)
@@ -114,7 +112,7 @@ func aboutPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func cred(w http.ResponseWriter, r *http.Request) {
-	req, err := r.Cookie("AAUEremotecredencials")
+	_, err := r.Cookie("AAUEremotecredencials")
 	if err != nil {
 		fmt.Println("method:", r.Method)
 		if r.Method == "GET" {
@@ -122,21 +120,21 @@ func cred(w http.ResponseWriter, r *http.Request) {
 			t.Execute(w, nil)
 		} else {
 			r.ParseForm()
-			name := r.Form["nome"]
+			/*name := r.Form["nome"]
 			cc := r.Form["cc"]
-			tipo := r.Form["tipo"]
-			acessoA = [8]string
-			for k, v := range r.Form {
-				if (k[0] == 'z' ) {
-					acessoA = append(acessoA, r.Form[k])  // Probably this will not work
+			tipo := r.Form["tipo"]*/
+			var acessoA [8]string
+			for k, _ := range r.Form {
+				if k[0] == 'z'  {
+					acessoA[k[1]-1] = string(k[1])  // Probably this will not work
 				} else {
-					acessoA = append(acessoA, 'X')
+					acessoA[k[1]] = "X"
 				}
 			}
 		}
 	} else {
 		login(w, r)
-		// http.Redirect()
+		//http.Redirect()
 	}
 }
 
@@ -253,7 +251,7 @@ func main() {
 	*/
 
 	user := "root"
-	password := "toor"  // for now later be kept in a secured format
+	//password := "toor"  // for now later be kept in a secured format
 
 	router  := httprouter.New()
 	router.GET("/", sayhelloName, BasicAuth(Unprotected, user, pass))
