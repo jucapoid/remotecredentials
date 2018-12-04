@@ -10,10 +10,11 @@ import (
 	"os" // For file storing
 	"os/exec"
 	"strings"
+	"sync"
 	"time" // For cookie but could also serve timestamp on pages
 	//"crypto/hmac"
 	// _ "github.com/lib/pq"
-	// "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	// "github.com/nu7hatch/gouuid"
 	"github.com/julienschmidt/httprouter"
 )
@@ -44,6 +45,8 @@ type CookieForm struct {
 }
 */
 
+
+
 func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
@@ -69,19 +72,38 @@ func MyCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 								Value: id.String(),
 								Expires: expiration}  // No maxAge, makes cookie ageless
 			// Domain: "aauecred.net"  // set on /etc/hosts
+		http.SetCookie(w, &cookie)
 	}
-	http.SetCookie(w, &cookie)
 	// force to load login
 }
 
+type Manager struct {
+	cookieName  string     //private cookiename
+	lock        sync.Mutex // protects session
+	provider    Provider
+	maxlifetime int64
+}
 
+type Provider interface {
+	SessionInit(sid string) (Session, error)
+	SessionRead(sid string) (Session, error)
+	SessionDestroy(sid string) error
+	SessionGC(maxLifeTime int64)
+}
+
+type Session interface {
+	Set(key, value interface{}) error //set session value
+	Get(key interface{}) interface{}  //get session value
+	Delete(key interface{}) error     //delete session value
+	SessionID() string                //back current sessionID
+}
 
 func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
 		manager.lock.Lock()
 		defer manager.lock.Unlock()
 		cookie, err := r.Cookie(manager.cookieName)
 		if err != nil || cookie.Value == "" {
-			sid := manager.sessionId()
+			sid := session.SessionID()
 			session, _ = manager.provider.SessionInit(sid)
 			cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxlifetime)}  // HttpOnly: false
 			http.SetCookie(w, &cookie)  // So i guess this replaces the MyCookie func?
@@ -92,26 +114,17 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 		return
 }
 
-//func NewManager(cookieName string, maxlifetime int64) (*CookieForm, error) {
-func NewManager(provideName, cookieName string, maxlifetime int64) (*CookieForm, error){
-	_, ok := provides[provideName]
-	if !ok {
-		return nil, fmt.Errorf("session: unknown provide %q (forgotten import?)", provideName)
-	}
-	return &CookieForm{cookieName: cookieName, maxlifetime: maxlifetime}, nil
-}  // I think we need to remove this
-
-func aboutPage(w http.ResponseWriter, r *http.Request) {
+func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 	_, err := r.Cookie("AAUEremotecredencials")
 	if err != nil {
 		t, _ := template.ParseFiles("./templates/about.html")
 		t.Execute(w, nil)
 	} else {
-		login(w, r)
+		login(w, r, h)
 	}
 }
 
-func cred(w http.ResponseWriter, r *http.Request) {
+func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 	_, err := r.Cookie("AAUEremotecredencials")
 	if err != nil {
 		fmt.Println("method:", r.Method)
@@ -133,7 +146,7 @@ func cred(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		login(w, r)
+		login(w, r, h)
 		//http.Redirect()
 	}
 }
@@ -153,7 +166,7 @@ func dbManager(q string) {
 }
 */
 
-func sayhelloName(w http.ResponseWriter, r *http.Request) {  // 
+func sayhelloName(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {  //
 	r.ParseForm()       // parse arguments, you have to call this by yourself
 	fmt.Println(r.Form) // print form information in server side
 	fmt.Println("path", r.URL.Path)
@@ -190,12 +203,13 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	fmt.Println()
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
-	sess := globalSessions.SessionStart(w, r)
+func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	//sess := globalSessions.SessionStart(w, r)
 	fmt.Println("method:", r.Method) //get request method
 	if r.Method == "GET" {
 		t, _ := template.ParseFiles("./templates/login.html")
-		t.Execute(w, sess.Get("username"))
+		t.Execute(w, nil)
+		//t.Execute(w, sess.Get("username"))
 		//w.Header().Set("Content-Type", "text/html")
 		//t.Execute(w, sess.Get("username"))
 	} else {
@@ -203,7 +217,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		// logic part of log in
 		fmt.Println("username:", r.Form["username"])
 		fmt.Println("password:", r.Form["password"])
-		sess.Set("username", r.Form["username"])
+		//sess.Set("username", r.Form["username"])
 		http.Redirect(w, r, "/", 302)
 	}
 	// Serve cookie for auth
@@ -251,18 +265,19 @@ func main() {
 	*/
 
 	user := "root"
-	//password := "toor"  // for now later be kept in a secured format
+	password := "toor"  // for now later be kept in a secured format
 
 	router  := httprouter.New()
-	router.GET("/", sayhelloName, BasicAuth(Unprotected, user, pass))
-	router.GET("/login/", login, BasicAuth(Unprotected, user, pass))
-	router.GET("/about/", aboutPage, BasicAuth(Unprotected, user, pass))
-	router.GET("/cred/", cred, BasicAuth(Protected, user, pass))
+	router.GET("/", sayhelloName)
+	router.GET("/login/" , login)
+	router.GET("/about/", aboutPage)
+	router.GET("/cred/", BasicAuth(cred, user, password))
 	// Cookies must be checked
 
-	log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router))
+	log.Fatal(http.ListenAndServe(":9090", router))
+	//log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router))
 	fmt.Println("Server up")
-	if err != nil {
+	/*if err != nil {
 		log.Fatal("ListenAndServe: ", err)
-	}
+	}*/
 }
