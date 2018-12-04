@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strings"
 	"time" // For cookie but could also serve timestamp on pages
+	"crypto/hmac"
 	// _ "github.com/lib/pq"
 	// "github.com/satori/go.uuid"
 	// "github.com/nu7hatch/gouuid"
@@ -23,31 +24,24 @@ import (
 // go get github.com/nu7hatch/gouuid
 
 /*
+Join BasicAuth and login
+BasicAuth and Manager?
 Change prints to log
-Put routing with a routing lib
+Add protect and unprotected to protected and unprotected pages
+Add go subroutines
 Get a ssl crt
 Cookie and not session bc cookies are pressistent
 Https / http1.1
 XSS protection?
 */
 
-
-func MyCookie(w http.ResponseWriter, r *http.Request) {
-	// get req and check if it has cookie if not serve a new cookie
-	req, err := r.Cookie("AAUEremotecredencials")
-	if err != nil {
-		id, _ := uuid.NewV4()
-		// use crypto/hmac
-		cookie := http.Cookie{
-								Name: "AAUEremotecredencials",
-								Value: id.String()
-		}  // No maxAge, makes cookie ageless
-			// Domain: "aauecred.net"  // set on /etc/hosts
-	}
-	http.SetCookie(w, &cookie)
-	// force to load login
+/*
+type CookieForm struct {
+	Name string
+	//lock     sync.Mutex // Not yet
+	lifeTime int64
 }
-
+*/
 
 func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -61,13 +55,42 @@ func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httpr
 	}
 }
 
-/*
-type CookieForm struct {
-	Name string
-	//lock     sync.Mutex // Not yet
-	lifeTime int64
+func MyCookie(w http.ResponseWriter, r *http.Request) {
+	// get req and check if it has cookie if not serve a new cookie
+	req, err := r.Cookie("AAUEremotecredencials")
+	if err != nil {
+		id, _ := uuid.NewV4()
+		// use crypto/hmac to make sure that no cookies can be messed arround with
+		expiration := time.Now().Add(24 * time.Hour) // 24h keys
+		cookie := http.Cookie{
+								Name: "AAUEremotecredencials",
+								Domain: "aaue.",
+								Value: id.String(),
+								Expires: expiration
+		}  // No maxAge, makes cookie ageless
+			// Domain: "aauecred.net"  // set on /etc/hosts
+	}
+	http.SetCookie(w, &cookie)
+	// force to load login
 }
 
+
+
+func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
+		manager.lock.Lock()
+		defer manager.lock.Unlock()
+		cookie, err := r.Cookie(manager.cookieName)
+		if (err != nil || cookie.Value == "") {
+			sid := manager.sessionId()
+			session, _ = manager.provider.SessionInit(sid)
+			cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxlifetime)}  // HttpOnly: false
+			http.SetCookie(w, &cookie)  // So i guess this replaces the MyCookie func?
+		} else {
+			sid, _ := url.QueryUnescape(cookie.Value)
+			session, _ = manager.provider.SessionRead(sid)
+		}
+		return
+}
 
 //func NewManager(cookieName string, maxlifetime int64) (*CookieForm, error) {
 func NewManager(provideName, cookieName string, maxlifetime int64) (*CookieForm, error){
@@ -76,8 +99,7 @@ func NewManager(provideName, cookieName string, maxlifetime int64) (*CookieForm,
 		return nil, fmt.Errorf("session: unknown provide %q (forgotten import?)", provideName)
 	}
 	return &CookieForm{cookieName: cookieName, maxlifetime: maxlifetime}, nil
-}
-*/
+}  // I think we need to remove this
 
 func aboutPage(w http.ResponseWriter, r *http.Request) {
 	req, err := r.Cookie("AAUEremotecredencials")
@@ -97,21 +119,20 @@ func cred(w http.ResponseWriter, r *http.Request) {
 			t, _ := template.ParseFiles("./templates/credform.html")
 			t.Execute(w, nil)
 		} else {
-			r.ParseForm() // acesso map or slice?
+			r.ParseForm()
 			name := r.Form["nome"]
 			cc := r.Form["cc"]
 			tipo := r.Form["tipo"]
 			acessoA = [8]string
 			for k, v := range r.Form {
 				if (k[0] == 'z' ) {
-					break
+					acessoA = append(a, r.Form(k))  // Probably this will not work
 				}
-				acessoA := []  // values?
-				// a = append(a, x)
 			}
 		}
 	} else {
 		login(w, r)
+		http.Redirect()
 	}
 }
 
@@ -142,7 +163,7 @@ func sayhelloName(w http.ResponseWriter, r *http.Request) {  //
 		fmt.Println("key:", k)
 		fmt.Println("val:", strings.Join(v, ""))
 		name += strings.Join(v, " ") + " "
-		// Very dangerous!! Input Validation of only expected
+		// Very dangerous!! Input Validation of expected only
 	}
 	fmt.Fprintf(w, "Hello %s\n your input has been received", name) // send data to client side
 }
@@ -168,18 +189,20 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
+	sess := globalSessions.SessionStart(w, r)
 	fmt.Println("method:", r.Method) //get request method
 	if r.Method == "GET" {
 		t, _ := template.ParseFiles("./templates/login.html")
-		t.Execute(w, nil)
+		t.Execute(w, sess.Get("username"))
+		//w.Header().Set("Content-Type", "text/html")
+		//t.Execute(w, sess.Get("username"))
 	} else {
 		r.ParseForm()
 		// logic part of log in
 		fmt.Println("username:", r.Form["username"])
 		fmt.Println("password:", r.Form["password"])
-		/*if len(r.Form["username"]) > 0 && len(r.Form["password"]) > 0 {
-			sayhelloName(w, r)
-		}*/
+		sess.Set("username", r.Form["username"])
+		http.Redirect(w, r, "/", 302)
 	}
 	// Serve cookie for auth
 }
@@ -217,6 +240,12 @@ func main() {
 	//http.HandleFunc("/cred", cred)           // Login must always come first
 	err := http.ListenAndServe(":9090", nil) // set listen port
 	*/
+	m := autocert.Manager{
+    	Prompt:     autocert.AcceptTOS,
+    	//HostPolicy: autocert.HostWhitelist("www.checknu.de"),
+    	Cache:      autocert.DirCache("/home/letsencrypt/"),
+	}
+
 	user := 'root'
 	password := 'toor'  // for now later be kept in a secured format
 
@@ -227,7 +256,7 @@ func main() {
 	router.GET("/cred/", cred, BasicAuth(Protected, user, pass))
 	// Cookies must be checked
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", 'key.pem', router))
 	fmt.Println("Server up")
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
