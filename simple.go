@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"html/template"
 	"io"
@@ -17,8 +18,10 @@ import (
 	"github.com/satori/go.uuid"
 	// "github.com/nu7hatch/gouuid"
 	"github.com/julienschmidt/httprouter"
+	_ "github.com/mattn/go-sqlite3"
 )
 // get libs
+// go get github.com/mattn/go-sqlite3
 // go get github.com/lib/pq
 // go get github.com/julienschmidt/httprouter
 // go get github.com/satori/go.uuid
@@ -144,6 +147,7 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 					acessoA[k[1]] = "X"
 				}
 			}
+			oldCred()
 		}
 	} else {
 		login(w, r, h)
@@ -203,6 +207,12 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	fmt.Println()
 }
 
+func checkerr(err error){
+	if err != nil {
+		panic(err)
+	}
+}
+
 func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	//sess := globalSessions.SessionStart(w, r)
 	fmt.Println("method:", r.Method) //get request method
@@ -214,6 +224,26 @@ func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		//t.Execute(w, sess.Get("username"))
 	} else {
 		r.ParseForm()
+		db, err := sql.Open("sqlite3", "db.sql")
+		checkerr(err)
+		stmt, err := db.Prepare("SELECT * FROM user WHERE username =?")
+		checkerr(err)
+		rows , err := stmt.Exec(r.Form["username"])
+		checkerr(err)
+		var user string
+		var password string
+		if rows.Next() {
+			err := rows.Scan(&user,&password)
+			checkerr(err)
+			if user == r.Form["username"][0] && password == r.Form["password"][0]{
+				expiration := time.Now().Add(24 * time.Hour)
+				cookie := http.Cookie{Name: "username", Value: user, Expires: expiration}
+				http.SetCookie(w, &cookie)
+				//sess.Set("username", user)
+			} else {
+				http.Redirect(w, r, "/", 302)
+			}
+		}
 		// logic part of log in
 		fmt.Println("username:", r.Form["username"])
 		fmt.Println("password:", r.Form["password"])
@@ -224,6 +254,8 @@ func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func oldCred(photo string, name string, cc string) string {
+	db, err := sql.Open("sqlite3", "db.sql")
+	checkerr(err)
 	// Just for now so that something can be presented
 	// foto.png must be named with the name or have the name an extra
 	// Pcmd := "python tests.py"
@@ -231,6 +263,13 @@ func oldCred(photo string, name string, cc string) string {
 	// cmd := Pcmd + args
 	// or
 	cmd := exec.Command("cd old; python credencias.py " + name + " cred" + name + ".png")
+	stmt, err := db.Prepare("INSERT INTO createdcreds values (?,?,?)")
+	checkerr(err)
+	res, err := stmt.Exec(time.Now(), username)
+	checkerr(err)
+	affect, err := res.RowsAffected()
+	checkerr(err)
+	fmt.Println(affect)
 	fmt.Println("Creating new credencial for " + name + " named cred" + name)
 	if errV := cmd.Run(); errV != nil {
 		log.Fatalf("Error: ", errV) // It's better than Start bc it waits to the command to finish
