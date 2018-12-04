@@ -11,7 +11,8 @@ import (
 	"os/exec"
 	"strings"
 	"time" // For cookie but could also serve timestamp on pages
-	"crypto/hmac"
+	
+	// "crypto/hmac"
 	// _ "github.com/lib/pq"
 	// "github.com/satori/go.uuid"
 	// "github.com/nu7hatch/gouuid"
@@ -56,7 +57,7 @@ func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httpr
 	}
 }
 
-func MyCookie(w http.ResponseWriter, r *http.Request) {
+func MyCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get req and check if it has cookie if not serve a new cookie
 	req, err := r.Cookie("AAUEremotecredencials")
 	if err != nil {
@@ -127,13 +128,15 @@ func cred(w http.ResponseWriter, r *http.Request) {
 			acessoA = [8]string
 			for k, v := range r.Form {
 				if (k[0] == 'z' ) {
-					acessoA = append(a, r.Form(k))  // Probably this will not work
+					acessoA = append(acessoA, r.Form[k])  // Probably this will not work
+				} else {
+					acessoA = append(acessoA, 'X')
 				}
 			}
 		}
 	} else {
 		login(w, r)
-		http.Redirect()
+		// http.Redirect()
 	}
 }
 
@@ -241,23 +244,25 @@ func main() {
 	//http.HandleFunc("/cred", cred)           // Login must always come first
 	err := http.ListenAndServe(":9090", nil) // set listen port
 	*/
+	/*
 	m := autocert.Manager{
     	Prompt:     autocert.AcceptTOS,
     	//HostPolicy: autocert.HostWhitelist("www.checknu.de"),
     	Cache:      autocert.DirCache("/home/letsencrypt/"),
 	}
+	*/
 
-	user := 'root'
-	password := 'toor'  // for now later be kept in a secured format
+	user := "root"
+	password := "toor"  // for now later be kept in a secured format
 
 	router  := httprouter.New()
-	router.GET("/", sayhelloName, BasicAuth(Protected, user, pass))
-	router.GET("/login/", login, BasicAuth(Protected, user, pass))
-	router.GET("/about/", aboutPage, BasicAuth(Protected, user, pass))
+	router.GET("/", sayhelloName, BasicAuth(Unprotected, user, pass))
+	router.GET("/login/", login, BasicAuth(Unprotected, user, pass))
+	router.GET("/about/", aboutPage, BasicAuth(Unprotected, user, pass))
 	router.GET("/cred/", cred, BasicAuth(Protected, user, pass))
 	// Cookies must be checked
 
-	log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", 'key.pem', router))
+	log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router))
 	fmt.Println("Server up")
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
