@@ -49,7 +49,6 @@ type CookieForm struct {
 */
 
 
-
 func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
@@ -136,7 +135,7 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			t.Execute(w, nil)
 		} else {
 			r.ParseForm()
-			/*name := r.Form["nome"]
+			/*name := r.Form["nome"]  // Uncomment this
 			cc := r.Form["cc"]
 			tipo := r.Form["tipo"]*/
 			var acessoA [8]string
@@ -144,7 +143,7 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 				if k[0] == 'z'  {
 					acessoA[k[1]-1] = string(k[1])  // Probably this will not work
 				} else {
-					acessoA[k[1]] = "X"
+					acessoA[k[1]-1] = "X"
 				}
 			}
 			oldCred()
@@ -177,7 +176,7 @@ func sayhelloName(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Println("scheme", r.URL.Scheme)
 	fmt.Println(r.Form["url_long"])  // why?
 	var name string
-	for k, v := range r.Form {
+	for k, v := range r.Form {  // why would we parse the form if there's no POST here?
 		fmt.Println(r.Form)
 		fmt.Println("key:", k)
 		fmt.Println("val:", strings.Join(v, ""))
@@ -277,34 +276,22 @@ func oldCred(photo string, name string, cc string) string {
 	return photo + name + ".png"
 }
 
+func redirTLS(w http.ResponseWriter, req *http.Request) {
+	hostParts := strings.Split(req.Host, ":")
+	http.Redirect(w, req, "https://"+hostParts[0]+req.RequestURI,  http.StatusMovedPermanently)
+}
+
 func main() {
 	/*
-		portstring := strconv.Itoa('8081')
-		mux := http.NewServeMux()
-		mux.Handle("/",http.HandleFunc(sayhelloName))
-		mux.Handle("/login/",http.HandleFunc(login))         // set router
-		mux.Handle("/cred/",http.HandleFunc(cred))           // Login must always come first
-		mux.Handle("/about/", http.HandleFunc(aboutPage))
-		mux.Handle(http.NotFoundHandle(), http.HandleFunc(aboutPage))
-	*/
-	/*
-	http.HandleFunc("/", sayhelloName)
-	http.HandleFunc("/login/", login) // Lookup some more advanced routing
-	http.HandleFunc("/about/", aboutPage)
-	http.HandleFunc("/cred/", cred)
-	//http.HandleFunc("/cred", cred)           // Login must always come first
-	err := http.ListenAndServe(":9090", nil) // set listen port
-	*/
-	/*
 	m := autocert.Manager{
-    	Prompt:     autocert.AcceptTOS,
-    	//HostPolicy: autocert.HostWhitelist("www.checknu.de"),
-    	Cache:      autocert.DirCache("/home/letsencrypt/"),
+		Prompt:     autocert.AcceptTOS,
+		//HostPolicy: autocert.HostWhitelist("www.checknu.de"),
+		Cache:      autocert.DirCache("/home/letsencrypt/"),
 	}
 	*/
 
 	user := "root"
-	password := "toor"  // for now later be kept in a secured format
+	password := "toor"  // this can now be removed
 
 	router  := httprouter.New()
 	router.GET("/", sayhelloName)
@@ -312,11 +299,11 @@ func main() {
 	router.GET("/about/", aboutPage)
 	router.GET("/cred/", BasicAuth(cred, user, password))
 	// Cookies must be checked
-
-	log.Fatal(http.ListenAndServe(":9090", router))
-	//log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router))
-	fmt.Println("Server up")
-	/*if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}*/
+	go func() {  // a go routine so that can start multiple threads
+		err := http.ListenAndServe(":9090", http.HandlerFunc(redirTLS))  // This may fail if so try using router
+		if err != nil {
+			checkerr(err)
+		}
+	}()  // idk if this is required
+	log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router))
 }
