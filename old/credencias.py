@@ -1,6 +1,4 @@
-"""
-Dividir em funçoes
-"""
+#!/bin/python3
 from PIL import Image, ImageFont, ImageDraw, PSDraw
 from tkinter import *
 import pyqrcode, sys
@@ -10,6 +8,9 @@ photo = sys.argv[1]
 name = sys.argv[2]
 cc = sys.argv[3]
 acessoA = sys.argv[4:]  # X or number
+if len(sys.argv[4:]) > 8:
+	print("Too much args")
+	sys.exit(1)
 credN = sys.argv[1] + sys.argv[2]
 """
 photo = "photo.jpg"
