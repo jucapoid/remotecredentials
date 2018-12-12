@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
-	"github.com/satori/go.uuid"
 	"html/template"
 	"io"
 	"log"
@@ -256,7 +255,7 @@ func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		checkerr(err)
 		stmt, err := db.Prepare("SELECT * FROM user WHERE username =?")
 		checkerr(err)
-		rows , err := stmt.Query(r.Form["username"])
+		rows, err := stmt.Query(r.Form["username"])
 		fmt.Println(rows)
 		checkerr(err)
 		var user string
@@ -294,7 +293,7 @@ func oldCred(photo string, name string, cc string) string {
 	cmd := exec.Command("cd old; python credencias.py " + name + " cred" + name + ".png")
 	stmt, err := db.Prepare("INSERT INTO createdcreds values (?,?,?)")
 	checkerr(err)
-	res, err := stmt.Exec("1",time.Now(), "luis", )
+	res, err := stmt.Exec("1", time.Now(), "luis")
 	checkerr(err)
 	affect, err := res.RowsAffected()
 	checkerr(err)
@@ -307,8 +306,13 @@ func oldCred(photo string, name string, cc string) string {
 }
 
 func redirTLS(w http.ResponseWriter, req *http.Request) {
-	hostParts := strings.Split(req.Host, ":")
-	http.Redirect(w, req, "https://"+hostParts[0]+req.RequestURI, http.StatusMovedPermanently)
+	target := "https://" + req.Host + req.URL.Path
+	if len(req.URL.RawQuery) > 0 {
+		target += "?" + req.URL.RawQuery
+	}
+	log.Printf("redirect to: %s", target)
+	http.Redirect(w, req, target,
+		http.StatusTemporaryRedirect)
 }
 
 func main() {
