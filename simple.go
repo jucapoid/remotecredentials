@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+	"github.com/satori/go.uuid"
 	"html/template"
 	"io"
 	"log"
@@ -179,7 +180,7 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 					acessoA[k[1]-1] = "X"
 				}
 			}
-			oldCred()
+			//oldCred()
 		}
 	} else {
 		login(w, r, h)
@@ -228,9 +229,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	// use filepath.Join to put it somewhere else.
 	// Should first check if file already exists
 	out, err := os.OpenFile(header.Filename, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		errCount += 1
-	}
+	checkerr(err)
 	defer out.Close()
 	io.Copy(out, in)
 	fmt.Println()
@@ -253,11 +252,12 @@ func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		//t.Execute(w, sess.Get("username"))
 	} else {
 		r.ParseForm()
-		db, err := sql.Open("sqlite3", "db.sql")
+		db, err := sql.Open("sqlite3", "remotecreds")
 		checkerr(err)
 		stmt, err := db.Prepare("SELECT * FROM user WHERE username =?")
 		checkerr(err)
-		rows, err := stmt.Exec(r.Form["username"])
+		rows , err := stmt.Query(r.Form["username"])
+		fmt.Println(rows)
 		checkerr(err)
 		var user string
 		var password string
@@ -294,7 +294,7 @@ func oldCred(photo string, name string, cc string) string {
 	cmd := exec.Command("cd old; python credencias.py " + name + " cred" + name + ".png")
 	stmt, err := db.Prepare("INSERT INTO createdcreds values (?,?,?)")
 	checkerr(err)
-	res, err := stmt.Exec(time.Now(), username)
+	res, err := stmt.Exec("1",time.Now(), "luis", )
 	checkerr(err)
 	affect, err := res.RowsAffected()
 	checkerr(err)
@@ -306,12 +306,12 @@ func oldCred(photo string, name string, cc string) string {
 	return photo + name + ".png"
 }
 
+func redirTLS(w http.ResponseWriter, req *http.Request) {
+	hostParts := strings.Split(req.Host, ":")
+	http.Redirect(w, req, "https://"+hostParts[0]+req.RequestURI, http.StatusMovedPermanently)
+}
 
 func main() {
-	func redirTLS(w http.ResponseWriter, req *http.Request) {
-		hostParts := strings.Split(req.Host, ":")
-		http.Redirect(w, req, "https://"+hostParts[0]+req.RequestURI, http.StatusMovedPermanently)
-	}
 	/*
 		m := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
