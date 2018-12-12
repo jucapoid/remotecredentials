@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+	"github.com/satori/go.uuid"
 	"html/template"
 	"io"
 	"log"
@@ -16,12 +17,9 @@ import (
 	"strings"
 	"sync"
 	"time" // For cookie but could also serve timestamp on pages
-
-	//"github.com/satori/go.uuid"
 	//"crypto/hmac"
 	// _ "github.com/lib/pq"
 	//"github.com/nu7hatch/gouuid"
-
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -54,7 +52,7 @@ type CookieForm struct {
 }
 */
 
-func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httprouter.Handle {
+func BasicAuth(h httprouter.Handle, requires []string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
 		if hasAuth && user == requiredUser && password == requiredPassword {
@@ -150,7 +148,7 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 }
 
 func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
-	_, err := r.Cookie("AAUEremotecredencials")
+	_, err := r.Cookie("username")
 	if err != nil {
 		t, _ := template.ParseFiles("./templates/about.html")
 		t.Execute(w, nil)
@@ -316,6 +314,10 @@ func redirTLS(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	db, err := sql.Open("sqlite3", "remotecreds")
+	checkerr(err)
+	rows, err := db.Query("SELECT * FROM user")
+	checkerr(err)
 	/*
 		m := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
@@ -323,18 +325,23 @@ func main() {
 			Cache:      autocert.DirCache("/home/letsencrypt/"),
 		}
 	*/
-
-	user := "root"
-	password := "toor" // this can now be removed
-
+	var user string
+	var pass string
+	var check []string
+	for rows.Next(){
+		err := rows.Scan(&user,&pass)
+		checkerr(err)
+		check := append(check, user, pass)
+		fmt.Println(check)
+	}
 	router := httprouter.New()
 	router.GET("/", sayhelloName)
 	router.GET("/login/", login)
 	router.GET("/about/", aboutPage)
-	router.GET("/cred/", BasicAuth(cred, user, password))
+	router.GET("/cred/", BasicAuth(cred, check))
 	// Cookies must be checked
 	go func() { // a go routine so that can start multiple threads
-		err := http.ListenAndServe(":9090", http.HandlerFunc(redirTLS)) // This may fail if so try using router
+		err := http.ListenAndServe(":8080", http.HandlerFunc(redirTLS)) // This may fail if so try using router
 		if err != nil {
 			panic(err)
 		}
