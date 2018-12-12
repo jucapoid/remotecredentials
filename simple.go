@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io"
@@ -13,13 +16,16 @@ import (
 	"strings"
 	"sync"
 	"time" // For cookie but could also serve timestamp on pages
+
+	//"github.com/satori/go.uuid"
 	//"crypto/hmac"
 	// _ "github.com/lib/pq"
-	"github.com/satori/go.uuid"
-	// "github.com/nu7hatch/gouuid"
+	//"github.com/nu7hatch/gouuid"
+
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/mattn/go-sqlite3"
 )
+
 // get libs
 // go get github.com/mattn/go-sqlite3
 // go get github.com/lib/pq
@@ -48,7 +54,6 @@ type CookieForm struct {
 }
 */
 
-
 func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
@@ -61,19 +66,47 @@ func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httpr
 	}
 }
 
+/*
+func CheckMAC(message, messageMAC, key []byte) bool {
+	mac := hmac.New(sha256.New, key)
+	mac.Write(message)
+	expectedMAC := mac.Sum(nil)
+	return hmac.Equal(messageMAC, expectedMAC)
+}
+*/
+
+func HMAC256(payload string, secret string) string {
+	sig := hmac.New(sha256.New, []byte(secret))
+	sig.Write([]byte(payload))
+	return b64Encode(string(sig.Sum(nil)[:]))
+	/*
+		key := []byte("5ebe2294ecd0e0f08eab7690d2a6ee69")
+		message := "AAUEremotecredentials"
+		sig := hmac.New(sha256.New, key)
+		sig.Write([]byte(message))
+		fmt.Println(hex.EncodeToString(sig.Sum(nil)))
+	*/
+}
+
+func b64Encode(text string) string {
+	return base64.RawStdEncoding.EncodeToString([]byte(text))
+}
+
 func MyCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get req and check if it has cookie if not serve a new cookie
 	_, err := r.Cookie("AAUEremotecredencials")
 	if err != nil {
 		id, _ := uuid.NewV4()
+		// id := HMAC256() // Arguments?
 		// use crypto/hmac to make sure that no cookies can be messed arround with
 		expiration := time.Now().Add(24 * time.Hour) // 24h keys
 		cookie := http.Cookie{
-								Name: "AAUEremotecredencials",
-								Domain: "aaue.",
-								Value: id.String(),
-								Expires: expiration}  // No maxAge, makes cookie ageless
-			// Domain: "aauecred.net"  // set on /etc/hosts
+			Name:   "AAUEremotecredencials",
+			Domain: "aaue.",
+			Value:  id.String(),
+			// Value:   HMAC256("AAUEremotecredencials", "AAUEremotecredencials"),  // safer than uuid
+			Expires: expiration} // No maxAge, makes cookie ageless
+		// Domain: "aauecred.net"  // set on /etc/hosts
 		http.SetCookie(w, &cookie)
 	}
 	// force to load login
@@ -101,19 +134,19 @@ type Session interface {
 }
 
 func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
-		manager.lock.Lock()
-		defer manager.lock.Unlock()
-		cookie, err := r.Cookie(manager.cookieName)
-		if err != nil || cookie.Value == "" {
-			sid := session.SessionID()
-			session, _ = manager.provider.SessionInit(sid)
-			cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxlifetime)}  // HttpOnly: false
-			http.SetCookie(w, &cookie)  // So i guess this replaces the MyCookie func?
-		} else {
-			sid, _ := url.QueryUnescape(cookie.Value)
-			session, _ = manager.provider.SessionRead(sid)
-		}
-		return
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
+	cookie, err := r.Cookie(manager.cookieName)
+	if err != nil || cookie.Value == "" {
+		sid := session.SessionID()
+		session, _ = manager.provider.SessionInit(sid)
+		cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxlifetime)} // HttpOnly: false
+		http.SetCookie(w, &cookie)                                                                                                                // So i guess this replaces the MyCookie func?
+	} else {
+		sid, _ := url.QueryUnescape(cookie.Value)
+		session, _ = manager.provider.SessionRead(sid)
+	}
+	return
 }
 
 func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
@@ -140,8 +173,8 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			tipo := r.Form["tipo"]*/
 			var acessoA [8]string
 			for k, _ := range r.Form {
-				if k[0] == 'z'  {
-					acessoA[k[1]-1] = string(k[1])  // Probably this will not work
+				if k[0] == 'z' {
+					acessoA[k[1]-1] = string(k[1]) // Probably this will not work
 				} else {
 					acessoA[k[1]-1] = "X"
 				}
@@ -153,7 +186,6 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 		//http.Redirect()
 	}
 }
-
 
 /*
 func dbManager(q string) {
@@ -169,14 +201,14 @@ func dbManager(q string) {
 }
 */
 
-func sayhelloName(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {  //
+func sayhelloName(w http.ResponseWriter, r *http.Request, _ httprouter.Params) { //
 	r.ParseForm()       // parse arguments, you have to call this by yourself
 	fmt.Println(r.Form) // print form information in server side
 	fmt.Println("path", r.URL.Path)
 	fmt.Println("scheme", r.URL.Scheme)
-	fmt.Println(r.Form["url_long"])  // why?
+	fmt.Println(r.Form["url_long"]) // why?
 	var name string
-	for k, v := range r.Form {  // why would we parse the form if there's no POST here?
+	for k, v := range r.Form { // why would we parse the form if there's no POST here?
 		fmt.Println(r.Form)
 		fmt.Println("key:", k)
 		fmt.Println("val:", strings.Join(v, ""))
@@ -188,10 +220,8 @@ func sayhelloName(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 func handleUpload(w http.ResponseWriter, r *http.Request) {
 	in, header, err := r.FormFile("photo")
-	errCount := 0
 	if err != nil {
 		log.Fatalf("Error: ", err)
-		errCount += 1
 	}
 	defer in.Close()
 	// you probably want to make sure header.Filename is unique and
@@ -206,7 +236,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	fmt.Println()
 }
 
-func checkerr(err error){
+func checkerr(err error) {
 	if err != nil {
 		panic(err)
 	}
@@ -227,14 +257,14 @@ func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		checkerr(err)
 		stmt, err := db.Prepare("SELECT * FROM user WHERE username =?")
 		checkerr(err)
-		rows , err := stmt.Exec(r.Form["username"])
+		rows, err := stmt.Exec(r.Form["username"])
 		checkerr(err)
 		var user string
 		var password string
 		if rows.Next() {
-			err := rows.Scan(&user,&password)
+			err := rows.Scan(&user, &password)
 			checkerr(err)
-			if user == r.Form["username"][0] && password == r.Form["password"][0]{
+			if user == r.Form["username"][0] && password == r.Form["password"][0] {
 				expiration := time.Now().Add(24 * time.Hour)
 				cookie := http.Cookie{Name: "username", Value: user, Expires: expiration}
 				http.SetCookie(w, &cookie)
@@ -276,34 +306,35 @@ func oldCred(photo string, name string, cc string) string {
 	return photo + name + ".png"
 }
 
-func redirTLS(w http.ResponseWriter, req *http.Request) {
-	hostParts := strings.Split(req.Host, ":")
-	http.Redirect(w, req, "https://"+hostParts[0]+req.RequestURI,  http.StatusMovedPermanently)
-}
 
 func main() {
-	/*
-	m := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		//HostPolicy: autocert.HostWhitelist("www.checknu.de"),
-		Cache:      autocert.DirCache("/home/letsencrypt/"),
+	func redirTLS(w http.ResponseWriter, req *http.Request) {
+		hostParts := strings.Split(req.Host, ":")
+		http.Redirect(w, req, "https://"+hostParts[0]+req.RequestURI, http.StatusMovedPermanently)
 	}
+	/*
+		m := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			//HostPolicy: autocert.HostWhitelist("www.checknu.de"),
+			Cache:      autocert.DirCache("/home/letsencrypt/"),
+		}
 	*/
 
 	user := "root"
-	password := "toor"  // this can now be removed
+	password := "toor" // this can now be removed
 
-	router  := httprouter.New()
+	router := httprouter.New()
 	router.GET("/", sayhelloName)
-	router.GET("/login/" , login)
+	router.GET("/login/", login)
 	router.GET("/about/", aboutPage)
 	router.GET("/cred/", BasicAuth(cred, user, password))
 	// Cookies must be checked
-	go func() {  // a go routine so that can start multiple threads
-		err := http.ListenAndServe(":9090", http.HandlerFunc(redirTLS))  // This may fail if so try using router
+	go func() { // a go routine so that can start multiple threads
+		err := http.ListenAndServe(":9090", http.HandlerFunc(redirTLS)) // This may fail if so try using router
 		if err != nil {
-			checkerr(err)
+			panic(err)
 		}
-	}()  // idk if this is required
-	log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router))
+	}() // idk if this is required
+	// log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router))
+	http.ListenAndServeTLS(":"+Config.String("9090"), Config.Key("https").String("cert.pem"), Config.Key("https").String("key.pem"), router)
 }
