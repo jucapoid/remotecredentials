@@ -1,7 +1,7 @@
-# remotecredencials
-A go project to create and manage credencials with a postgresql database and a simple http web server for usage in browser
+# remotecredentials
+A go project to create and manage credentials with a postgresql database and a simple http web server for usage in browser
 
-For now we have imported an old project to do the credencial generation
+For now we have imported an old project to do the credential generation
 
 # To use the server
 #### `go run simple.go`
