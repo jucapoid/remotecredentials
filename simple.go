@@ -340,5 +340,5 @@ func main() {
 		}
 	}() // idk if this is required
 	// log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router))
-	http.ListenAndServeTLS(":"+Config.String("9090"), Config.Key("https").String("cert.pem"), Config.Key("https").String("key.pem"), router)
+	http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router)
 }
