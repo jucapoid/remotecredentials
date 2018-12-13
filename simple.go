@@ -52,10 +52,18 @@ type CookieForm struct {
 }
 */
 
-func BasicAuth(h httprouter.Handle, requires []string) httprouter.Handle {
+func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
-		if hasAuth && user == requiredUser && password == requiredPassword {
+		var conf = false
+		if hasAuth {
+			for _, combo := range requires {
+				if combo[0] == user+" "+password {
+					conf = true
+				}
+			}
+		}
+		if conf == true {
 			h(w, r, ps)
 		} else {
 			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
@@ -325,15 +333,16 @@ func main() {
 			Cache:      autocert.DirCache("/home/letsencrypt/"),
 		}
 	*/
-	var user string
-	var pass string
-	var check []string
+	var user, pass string
+	var check [][1]string
+	var aux [1]string
 	for rows.Next(){
 		err := rows.Scan(&user,&pass)
 		checkerr(err)
-		check := append(check, user, pass)
-		fmt.Println(check)
+		aux[0] = user + " " + pass
+		check = append(check, aux)
 	}
+	fmt.Println(check)
 	router := httprouter.New()
 	router.GET("/", sayhelloName)
 	router.GET("/login/", login)
