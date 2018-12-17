@@ -6,31 +6,35 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
-	"github.com/satori/go.uuid"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
-	"os" // For file storing
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
-	"time" // For cookie but could also serve timestamp on pages
-	//"crypto/hmac"
+	"time"
+
+	"github.com/gorilla/securecookie"
+	"github.com/satori/go.uuid"
+
 	// _ "github.com/lib/pq"
-	//"github.com/nu7hatch/gouuid"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/mattn/go-sqlite3"
+	//"github.com/gorilla/securecookie"
+	//"github.com/gorilla/sessions"
+	//"github.com/gorilla/csrf"
 )
 
 // get libs
 // go get github.com/mattn/go-sqlite3
-// go get github.com/lib/pq
 // go get github.com/julienschmidt/httprouter
 // go get github.com/satori/go.uuid
-// or
-// go get github.com/nu7hatch/gouuid
+// go get github.com/gorilla/securecookie
+// go get github.com/gorilla/sessions
+// go get github.com/gorilla/csrf
 
 /*
 Join BasicAuth and login
@@ -56,7 +60,7 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
 		var conf = false
-		if hasAuth {
+		if hasAuth { // Shouldn't this be !hasAuth ???
 			for _, combo := range requires {
 				if combo[0] == user+" "+password {
 					conf = true
@@ -104,11 +108,10 @@ func MyCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if err != nil {
 		id, _ := uuid.NewV4()
 		// id := HMAC256() // Arguments?
-		// use crypto/hmac to make sure that no cookies can be messed arround with
 		expiration := time.Now().Add(24 * time.Hour) // 24h keys
 		cookie := http.Cookie{
 			Name:   "AAUEremotecredencials",
-			Domain: "aaue.",
+			Domain: "creds.aaue.pt", // im guessing something like that
 			Value:  id.String(),
 			// Value:   HMAC256("AAUEremotecredencials", "AAUEremotecredencials"),  // safer than uuid
 			Expires: expiration} // No maxAge, makes cookie ageless
@@ -133,8 +136,8 @@ type Provider interface {
 }
 
 type Session interface {
-	Set(key, value interface{}) error //set session value
-	Get(key interface{}) interface{}  //get session value
+	Set(key, value interface{}) error //set custom session value
+	Get(key interface{}) interface{}  //get custom session value
 	Delete(key interface{}) error     //delete session value
 	SessionID() string                //back current sessionID
 }
@@ -160,12 +163,12 @@ func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 	if err != nil {
 		t, _ := template.ParseFiles("./templates/about.html")
 		t.Execute(w, nil)
-	} else {
-		login(w, r, h)
 	}
 }
 
 func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
+	var acessoA [8]string
+	fmt.Println(r.Form)
 	_, err := r.Cookie("AAUEremotecredencials")
 	if err != nil {
 		fmt.Println("method:", r.Method)
@@ -174,21 +177,25 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			t.Execute(w, nil)
 		} else {
 			r.ParseForm()
-			/*name := r.Form["nome"]  // Uncomment this
-			cc := r.Form["cc"]
-			tipo := r.Form["tipo"]*/
-			var acessoA [8]string
+			/*
+				name := r.Form["nome"]
+				cc := r.Form["cc"]
+				tipo := r.Form["tipo"]
+				photo := r.FormFile["photo"]
+				// either use handleUpload from here or implement it here
+			*/
 			for k, _ := range r.Form {
 				if k[0] == 'z' {
-					acessoA[k[1]-1] = string(k[1]) // Probably this will not work
+					acessoA[k[1]-1] = string(k[1])
 				} else {
 					acessoA[k[1]-1] = "X"
 				}
 			}
-			//oldCred()
+			//oldCred() // photo obj, name, id(cc), acessoA
 		}
 	} else {
-		login(w, r, h)
+		//login(w, r, h)  // basicAuth i guess
+		fmt.Println()
 		//http.Redirect()
 	}
 }
@@ -230,9 +237,6 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Error: ", err)
 	}
 	defer in.Close()
-	// you probably want to make sure header.Filename is unique and
-	// use filepath.Join to put it somewhere else.
-	// Should first check if file already exists
 	out, err := os.OpenFile(header.Filename, os.O_WRONLY|os.O_CREATE, 0644)
 	checkerr(err)
 	defer out.Close()
@@ -246,60 +250,22 @@ func checkerr(err error) {
 	}
 }
 
-func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	//sess := globalSessions.SessionStart(w, r)
-	fmt.Println("method:", r.Method) //get request method
-	if r.Method == "GET" {
-		t, _ := template.ParseFiles("./templates/login.html")
-		t.Execute(w, nil)
-		//t.Execute(w, sess.Get("username"))
-		//w.Header().Set("Content-Type", "text/html")
-		//t.Execute(w, sess.Get("username"))
-	} else {
-		r.ParseForm()
-		db, err := sql.Open("sqlite3", "remotecreds")
-		checkerr(err)
-		stmt, err := db.Prepare("SELECT * FROM user WHERE username =?")
-		checkerr(err)
-		rows, err := stmt.Query(r.Form["username"])
-		fmt.Println(rows)
-		checkerr(err)
-		var user string
-		var password string
-		if rows.Next() {
-			err := rows.Scan(&user, &password)
-			checkerr(err)
-			if user == r.Form["username"][0] && password == r.Form["password"][0] {
-				expiration := time.Now().Add(24 * time.Hour)
-				cookie := http.Cookie{Name: "username", Value: user, Expires: expiration}
-				http.SetCookie(w, &cookie)
-				//sess.Set("username", user)
-			} else {
-				http.Redirect(w, r, "/", 302)
-			}
-		}
-		// logic part of log in
-		fmt.Println("username:", r.Form["username"])
-		fmt.Println("password:", r.Form["password"])
-		//sess.Set("username", r.Form["username"])
-		http.Redirect(w, r, "/", 302)
-	}
-	// Serve cookie for auth
-}
-
-func oldCred(photo string, name string, cc string) string {
-	db, err := sql.Open("sqlite3", "db.sql")
-	checkerr(err)
+func oldCred(photo string, name string, cc string, acessoA []string) string { // add arg cookie
 	// Just for now so that something can be presented
 	// foto.png must be named with the name or have the name an extra
 	// Pcmd := "python tests.py"
 	// args := ""
 	// cmd := Pcmd + args
-	// or
-	cmd := exec.Command("cd old; python credencias.py " + name + " cred" + name + ".png")
+	var acessoS string
+	db, err := sql.Open("sqlite3", "db.sql")
+	checkerr(err)
+	for _, v := range acessoA {
+		acessoS += v
+	}
+	cmd := exec.Command("cd old; python credencias.py " + photo + " " + name + " " + cc + " " + acessoS)
 	stmt, err := db.Prepare("INSERT INTO createdcreds values (?,?,?)")
 	checkerr(err)
-	res, err := stmt.Exec("1", time.Now(), "luis")
+	res, err := stmt.Exec("1", time.Now(), "luis") // uuid, date, user
 	checkerr(err)
 	affect, err := res.RowsAffected()
 	checkerr(err)
@@ -312,14 +278,26 @@ func oldCred(photo string, name string, cc string) string {
 }
 
 func redirTLS(w http.ResponseWriter, req *http.Request) {
-	target := "https://" + req.Host + req.URL.Path
+	var port, host, target string
+	var hnP []string
+	target = "https://" + req.URL.Host + req.URL.Path
+	hnP = strings.Split(req.Host, ":")
+	host, port = hnP[0], hnP[1]
+	if port != "9090" {
+		port = "9090"
+	}
 	if len(req.URL.RawQuery) > 0 {
 		target += "?" + req.URL.RawQuery
 	}
+	target = "https://" + host + ":" + port + req.URL.Path
 	log.Printf("redirect to: %s", target)
-	http.Redirect(w, req, target,
-		http.StatusTemporaryRedirect)
+	http.Redirect(w, req, target, http.StatusMovedPermanently)
 }
+
+// HMAC hashKey and blockKey
+var hashKey = []byte("very-secret")
+var blockKey = []byte("a-lot-secret")
+var s = securecookie.New(hashKey, blockKey)
 
 func main() {
 	db, err := sql.Open("sqlite3", "remotecreds")
@@ -336,8 +314,8 @@ func main() {
 	var user, pass string
 	var check [][1]string
 	var aux [1]string
-	for rows.Next(){
-		err := rows.Scan(&user,&pass)
+	for rows.Next() {
+		err := rows.Scan(&user, &pass)
 		checkerr(err)
 		aux[0] = user + " " + pass
 		check = append(check, aux)
@@ -345,16 +323,15 @@ func main() {
 	fmt.Println(check)
 	router := httprouter.New()
 	router.GET("/", sayhelloName)
-	router.GET("/login/", login)
+	// router.GET("/login/", login)
 	router.GET("/about/", aboutPage)
 	router.GET("/cred/", BasicAuth(cred, check))
 	// Cookies must be checked
 	go func() { // a go routine so that can start multiple threads
-		err := http.ListenAndServe(":8080", http.HandlerFunc(redirTLS)) // This may fail if so try using router
+		err := http.ListenAndServe(":8080", http.HandlerFunc(redirTLS)) // Final version should use port 80
 		if err != nil {
 			panic(err)
 		}
 	}() // idk if this is required
-	// log.Fatal(http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router))
-	http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router)
+	http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router) // Final version should use port 443
 }

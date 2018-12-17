@@ -12,12 +12,12 @@ if len(sys.argv[4:]) > 8:
 	print("Too much args")
 	sys.exit(1)
 credN = sys.argv[1] + sys.argv[2]
+fundo = "cred.png"
 """
 photo = "photo.jpg"
 name = "zeTeste"
 cc = "11227788"
 credN = photo + name
-fundo = "cred.png"
 """
 # credN = sys.argv[1:3].join()
 
