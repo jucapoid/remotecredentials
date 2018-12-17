@@ -3,6 +3,8 @@ A go project to create and manage credentials with a postgresql database and a s
 
 For now we have imported an old project to do the credential generation
 
+Also would a cups client service be usefull for printing(actual printing in paper)?
+
 # To use the server
 #### `go run simple.go`
 or

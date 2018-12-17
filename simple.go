@@ -1,62 +1,73 @@
 package main
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/gorilla/securecookie"
-	"github.com/satori/go.uuid"
-
-	// _ "github.com/lib/pq"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/mattn/go-sqlite3"
-	//"github.com/gorilla/securecookie"
-	//"github.com/gorilla/sessions"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 	//"github.com/gorilla/csrf"
+	/*
+	"github.com/satori/go.uuid"
+	"encoding/base64"
+	"net/url"
+	"sync"
+	"crypto/hmac"
+	"crypto/sha256"
+	*/
 )
 
-// get libs
-// go get github.com/mattn/go-sqlite3
-// go get github.com/julienschmidt/httprouter
-// go get github.com/satori/go.uuid
-// go get github.com/gorilla/securecookie
-// go get github.com/gorilla/sessions
-// go get github.com/gorilla/csrf
-
 /*
-Join BasicAuth and login
-BasicAuth and Manager?
-Change prints to log
-Add protect and unprotected to protected and unprotected pages
-Add go subroutines
-Get a ssl crt
-Cookie and not session bc cookies are pressistent
-Https / http1.1
-XSS protection?
+-More go routines and channel interaction with them
+-CrossSiteRequestForgery protection with github.com/gorilla/csrf
 */
 
-/*
-type CookieForm struct {
-	Name string
-	//lock     sync.Mutex // Not yet
-	lifeTime int64
+// New Cookie and session
+var hashKey = []byte("very-secret")  // probably get genKey.sh output
+var blockKey = []byte("a-lot-secret")  // another genKey.sh output
+var s = securecookie.New(hashKey, blockKey)
+var store = sessions.NewCookieStore(os.Getenv("SESSION_KEY"))  // export SESSION_KEY=$(bash genKey.sh)
+
+func SetCookieHandle(w http.ResponseWriter, r *http.Request){
+	value := map[string]string{hashKey: blockKey}  // maybe hashkey: blockKey
+	if encoded, err := s.Encode("AAUEremotecredencials", value); err == nil{
+		cookie := &http.Cookie{Name: "AAUEremotecredencials", Value: encoded, Path: "/"}
+	}
+
 }
-*/
 
-func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
+func readCookieHandler(w http.ResponseWriter, r *http.Request) {
+	if cookie, err := r.Cookie("AAUEremotecredencials"); err == nil {
+		value := make(map[string]string)
+		if err = s2.Decode("AAUEremotecredencials", cookie.Value, &value); err == nil {
+			fmt.Fprintf(w, "The value of the key is %q", value[hashKey])
+		}
+	}
+}
+
+
+func MyHandler(w http.ResponseWriter, r *http.Request) {
+    session, err := store.Get(r, "AAUEremotecredencials")
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    session.Values[hashKey] = blockKey
+    session.Save(r, w)
+}
+// end new cookie and session
+
+func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {  // Here it decides if cookie is set or not
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
 		var conf = false
@@ -74,88 +85,6 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		}
 	}
-}
-
-/*
-func CheckMAC(message, messageMAC, key []byte) bool {
-	mac := hmac.New(sha256.New, key)
-	mac.Write(message)
-	expectedMAC := mac.Sum(nil)
-	return hmac.Equal(messageMAC, expectedMAC)
-}
-*/
-
-func HMAC256(payload string, secret string) string {
-	sig := hmac.New(sha256.New, []byte(secret))
-	sig.Write([]byte(payload))
-	return b64Encode(string(sig.Sum(nil)[:]))
-	/*
-		key := []byte("5ebe2294ecd0e0f08eab7690d2a6ee69")
-		message := "AAUEremotecredentials"
-		sig := hmac.New(sha256.New, key)
-		sig.Write([]byte(message))
-		fmt.Println(hex.EncodeToString(sig.Sum(nil)))
-	*/
-}
-
-func b64Encode(text string) string {
-	return base64.RawStdEncoding.EncodeToString([]byte(text))
-}
-
-func MyCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// get req and check if it has cookie if not serve a new cookie
-	_, err := r.Cookie("AAUEremotecredencials")
-	if err != nil {
-		id, _ := uuid.NewV4()
-		// id := HMAC256() // Arguments?
-		expiration := time.Now().Add(24 * time.Hour) // 24h keys
-		cookie := http.Cookie{
-			Name:   "AAUEremotecredencials",
-			Domain: "creds.aaue.pt", // im guessing something like that
-			Value:  id.String(),
-			// Value:   HMAC256("AAUEremotecredencials", "AAUEremotecredencials"),  // safer than uuid
-			Expires: expiration} // No maxAge, makes cookie ageless
-		// Domain: "aauecred.net"  // set on /etc/hosts
-		http.SetCookie(w, &cookie)
-	}
-	// force to load login
-}
-
-type Manager struct {
-	cookieName  string     //private cookiename
-	lock        sync.Mutex // protects session
-	provider    Provider
-	maxlifetime int64
-}
-
-type Provider interface {
-	SessionInit(sid string) (Session, error)
-	SessionRead(sid string) (Session, error)
-	SessionDestroy(sid string) error
-	SessionGC(maxLifeTime int64)
-}
-
-type Session interface {
-	Set(key, value interface{}) error //set custom session value
-	Get(key interface{}) interface{}  //get custom session value
-	Delete(key interface{}) error     //delete session value
-	SessionID() string                //back current sessionID
-}
-
-func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
-	manager.lock.Lock()
-	defer manager.lock.Unlock()
-	cookie, err := r.Cookie(manager.cookieName)
-	if err != nil || cookie.Value == "" {
-		sid := session.SessionID()
-		session, _ = manager.provider.SessionInit(sid)
-		cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxlifetime)} // HttpOnly: false
-		http.SetCookie(w, &cookie)                                                                                                                // So i guess this replaces the MyCookie func?
-	} else {
-		sid, _ := url.QueryUnescape(cookie.Value)
-		session, _ = manager.provider.SessionRead(sid)
-	}
-	return
 }
 
 func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
@@ -177,13 +106,18 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			t.Execute(w, nil)
 		} else {
 			r.ParseForm()
-			/*
-				name := r.Form["nome"]
-				cc := r.Form["cc"]
-				tipo := r.Form["tipo"]
-				photo := r.FormFile["photo"]
-				// either use handleUpload from here or implement it here
-			*/
+			name := r.Form["nome"]
+			cc := r.Form["cc"]
+			tipo := r.Form["tipo"]
+
+			in, header, err := r.FormFile["photo"]
+			checkerr(err)
+			defer in.Close()
+			out, err := os.OpenFile(header.Filename, os.O_WRONLY|os.O_CREATE, 0644)
+			checkerr(err)
+			defer out.Close()
+			io.Copy(out, in)
+
 			for k, _ := range r.Form {
 				if k[0] == 'z' {
 					acessoA[k[1]-1] = string(k[1])
@@ -200,20 +134,6 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 	}
 }
 
-/*
-func dbManager(q string) {
-	connStr := "user=pqgotest dbname=pqgotest sslmode=verify-full"
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	rows, err := db.Query(q)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-*/
-
 func sayhelloName(w http.ResponseWriter, r *http.Request, _ httprouter.Params) { //
 	r.ParseForm()       // parse arguments, you have to call this by yourself
 	fmt.Println(r.Form) // print form information in server side
@@ -229,19 +149,6 @@ func sayhelloName(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		// Very dangerous!! Input Validation of expected only
 	}
 	fmt.Fprintf(w, "Hello %s\n your input has been received", name) // send data to client side
-}
-
-func handleUpload(w http.ResponseWriter, r *http.Request) {
-	in, header, err := r.FormFile("photo")
-	if err != nil {
-		log.Fatalf("Error: ", err)
-	}
-	defer in.Close()
-	out, err := os.OpenFile(header.Filename, os.O_WRONLY|os.O_CREATE, 0644)
-	checkerr(err)
-	defer out.Close()
-	io.Copy(out, in)
-	fmt.Println()
 }
 
 func checkerr(err error) {
@@ -294,11 +201,6 @@ func redirTLS(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, target, http.StatusMovedPermanently)
 }
 
-// HMAC hashKey and blockKey
-var hashKey = []byte("very-secret")
-var blockKey = []byte("a-lot-secret")
-var s = securecookie.New(hashKey, blockKey)
-
 func main() {
 	db, err := sql.Open("sqlite3", "remotecreds")
 	checkerr(err)
@@ -326,12 +228,114 @@ func main() {
 	// router.GET("/login/", login)
 	router.GET("/about/", aboutPage)
 	router.GET("/cred/", BasicAuth(cred, check))
-	// Cookies must be checked
-	go func() { // a go routine so that can start multiple threads
+	// CrossSiteRequestForgery protection
+	//CSRF := csrf.Protect([]byte(hashKey))  // i think it is the hashKey
+	go func() {
 		err := http.ListenAndServe(":8080", http.HandlerFunc(redirTLS)) // Final version should use port 80
 		if err != nil {
 			panic(err)
 		}
-	}() // idk if this is required
+	}()
 	http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router) // Final version should use port 443
 }
+
+/*
+
+func CheckMAC(message, messageMAC, key []byte) bool {
+	mac := hmac.New(sha256.New, key)
+	mac.Write(message)
+	expectedMAC := mac.Sum(nil)
+	return hmac.Equal(messageMAC, expectedMAC)
+}
+
+func HMAC256(payload string, secret string) string {
+	sig := hmac.New(sha256.New, []byte(secret))
+	sig.Write([]byte(payload))
+	return b64Encode(string(sig.Sum(nil)[:]))
+	
+	key := []byte("5ebe2294ecd0e0f08eab7690d2a6ee69")
+	message := "AAUEremotecredentials"
+	sig := hmac.New(sha256.New, key)
+	sig.Write([]byte(message))
+	fmt.Println(hex.EncodeToString(sig.Sum(nil)))
+}
+
+func b64Encode(text string) string {
+	return base64.RawStdEncoding.EncodeToString([]byte(text))
+}
+
+func MyCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	// get req and check if it has cookie if not serve a new cookie
+	_, err := r.Cookie("AAUEremotecredencials")
+	if err != nil {
+		id, _ := uuid.NewV4()
+		// id := HMAC256() // Arguments?
+		expiration := time.Now().Add(24 * time.Hour) // 24h keys
+		cookie := http.Cookie{
+			Name:   "AAUEremotecredencials",
+			Domain: "creds.aaue.pt", // im guessing something like that
+			Value:  id.String(),
+			// Value:   HMAC256("AAUEremotecredencials", "AAUEremotecredencials"),  // safer than uuid
+			Expires: expiration} // No maxAge, makes cookie ageless
+		// Domain: "aauecred.net"  // set on /etc/hosts
+		http.SetCookie(w, &cookie)
+	}
+	// force to load login
+}
+
+type Manager struct {
+	cookieName  string     //private cookiename
+	lock        sync.Mutex // protects session
+	provider    Provider
+	maxlifetime int64
+}
+
+type Provider interface {
+	SessionInit(sid string) (Session, error)
+	SessionRead(sid string) (Session, error)
+	SessionDestroy(sid string) error
+	SessionGC(maxLifeTime int64)
+}
+
+type Session interface {
+	Set(key, value interface{}) error //set custom session value
+	Get(key interface{}) interface{}  //get custom session value
+	Delete(key interface{}) error     //delete session value
+	SessionID() string                //back current sessionID
+}
+
+type CookieForm struct {
+	Name string
+	//lock     sync.Mutex // Not yet
+	lifeTime int64
+}
+
+func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
+	cookie, err := r.Cookie(manager.cookieName)
+	if err != nil || cookie.Value == "" {
+		sid := session.SessionID()
+		session, _ = manager.provider.SessionInit(sid)
+		cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxlifetime)} // HttpOnly: false
+		http.SetCookie(w, &cookie)                                                                                                                // So i guess this replaces the MyCookie func?
+	} else {
+		sid, _ := url.QueryUnescape(cookie.Value)
+		session, _ = manager.provider.SessionRead(sid)
+	}
+	return
+}
+
+func dbManager(q string) {
+	connStr := "user=pqgotest dbname=pqgotest sslmode=verify-full"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	rows, err := db.Query(q)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+*/
