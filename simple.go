@@ -80,6 +80,7 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 			return
 		}
 		s1.Options = &sessions.Options{
+			//address:	ip
 			//Name:     "AAUEremotecredencials",
 			Path:     "/",
 			MaxAge:   86400, // a day
@@ -92,9 +93,16 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 					// conf = true
 					// Save in cookie value["login"] = true
 					s1.Values["login"] = true
-					sessions.Save(r, w)
+					s1.Values["user"] = user
+					err := s1.Save(r, w)
+					checkerr(err)
 				}
 			}
+		}
+		for i, val := range s1.Values{
+			fmt.Print(i)
+			fmt.Print(" ")
+			fmt.Println(val)
 		}
 		if s1.Values["login"] == true {
 			h(w, r, ps)
@@ -126,7 +134,11 @@ func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 	var acessoA [8]string
 	fmt.Println(r.Form)
-	_, err := r.Cookie("AAUEremotecredencials")
+	co, err := r.Cookie("AAUEremotecredencials")
+	for _, val := range co.Value{
+		fmt.Print(" ")
+		fmt.Println(val)
+	}
 	if err != nil {
 		fmt.Println("method:", r.Method)
 		if r.Method == "GET" {
