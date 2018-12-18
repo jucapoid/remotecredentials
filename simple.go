@@ -12,20 +12,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
+	"github.com/julienschmidt/httprouter"
+	_ "github.com/mattn/go-sqlite3"
 	//"github.com/gorilla/csrf"
 	/*
-	"github.com/satori/go.uuid"
-	"encoding/base64"
-	"net/url"
-	"sync"
-	"crypto/hmac"
-	"crypto/sha256"
-	*/
-)
+		"github.com/satori/go.uuid"
+		"encoding/base64"
+		"net/url"
+		"sync"
+		"crypto/hmac"
+		"crypto/sha256"
+	*/)
 
 /*
 -More go routines and channel interaction with them
@@ -33,14 +32,15 @@ import (
 */
 
 // New Cookie and session
-var hashKey = []byte("very-secret")  // probably get genKey.sh output
-var blockKey = []byte("a-lot-secret")  // another genKey.sh output
-var s = securecookie.New(hashKey, blockKey)
-var store = sessions.NewCookieStore(os.Getenv("SESSION_KEY"))  // export SESSION_KEY=$(bash genKey.sh)
+/*
+var store = sessions.NewCookieStore(os.Getenv("SESSION_KEY")) // export SESSION_KEY=$(bash genKey.sh)
+// Useless new cookie and session stuff
+var hashKey = []byte("very-secret")   // probably get genKey.sh output
+var blockKey = []byte("a-lot-secret") // another genKey.sh output
 
-func SetCookieHandle(w http.ResponseWriter, r *http.Request){
-	value := map[string]string{hashKey: blockKey}  // maybe hashkey: blockKey
-	if encoded, err := s.Encode("AAUEremotecredencials", value); err == nil{
+func SetCookieHandle(w http.ResponseWriter, r *http.Request) {
+	value := map[string]string{hashKey: blockKey} // maybe hashkey: blockKey
+	if encoded, err := s.Encode("AAUEremotecredencials", value); err == nil {
 		cookie := &http.Cookie{Name: "AAUEremotecredencials", Value: encoded, Path: "/"}
 	}
 
@@ -55,30 +55,48 @@ func readCookieHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
 func MyHandler(w http.ResponseWriter, r *http.Request) {
-    session, err := store.Get(r, "AAUEremotecredencials")
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    session.Values[hashKey] = blockKey
-    session.Save(r, w)
+	session, err := store.Get(r, "AAUEremotecredencials")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+		// Maybe setcookie?
+	}
+	session.Values[hashKey] = blockKey
+	session.Save(r, w)
 }
+*/
+
+var s = sessions.NewCookieStore(securecookie.GenerateRandomKey(32))
+
 // end new cookie and session
 
-func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {  // Here it decides if cookie is set or not
+func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
-		var conf = false
+		s1, err := s.Get(r, "AAUEremotecredencials")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		s1.Options = &sessions.Options{
+			//Name:     "AAUEremotecredencials",
+			Path:     "/",
+			MaxAge:   86400, // a day
+			HttpOnly: true,
+		}
+		//var conf = false
 		if hasAuth { // Shouldn't this be !hasAuth ???
 			for _, combo := range requires {
 				if combo[0] == user+" "+password {
-					conf = true
+					// conf = true
+					// Save in cookie value["login"] = true
+					s1.Values["login"] = true
+					sessions.Save(r, w)
 				}
 			}
 		}
-		if conf == true {
+		if s1.Values["login"] == true {
 			h(w, r, ps)
 		} else {
 			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
@@ -86,6 +104,16 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {  /
 		}
 	}
 }
+
+/*
+func logout(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("AAUEremotecredencials")
+	if err != nil {
+		return
+		// The user isn't logged in because cookie isnt set
+	}
+}
+*/
 
 func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 	_, err := r.Cookie("username")
@@ -106,11 +134,11 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			t.Execute(w, nil)
 		} else {
 			r.ParseForm()
-			name := r.Form["nome"]
-			cc := r.Form["cc"]
-			tipo := r.Form["tipo"]
+			//name := r.Form["nome"]
+			//cc := r.Form["cc"]
+			//tipo := r.Form["tipo"]
 
-			in, header, err := r.FormFile["photo"]
+			in, header, err := r.FormFile("photo")
 			checkerr(err)
 			defer in.Close()
 			out, err := os.OpenFile(header.Filename, os.O_WRONLY|os.O_CREATE, 0644)
@@ -252,7 +280,7 @@ func HMAC256(payload string, secret string) string {
 	sig := hmac.New(sha256.New, []byte(secret))
 	sig.Write([]byte(payload))
 	return b64Encode(string(sig.Sum(nil)[:]))
-	
+
 	key := []byte("5ebe2294ecd0e0f08eab7690d2a6ee69")
 	message := "AAUEremotecredentials"
 	sig := hmac.New(sha256.New, key)
