@@ -186,7 +186,7 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 					// conf = true
 					// Save in cookie value["login"] = true
 					SetCookieHandler(w, r, user)
-					/*s1.Values["login"] = true
+					s1.Values["login"] = true
 					s1.Values["user"] = user
 					err := s1.Save(r, w)
 					checkerr(err)
@@ -194,6 +194,8 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 			}
 		}
 		ReadCookieHandler(w,r, h, ps)
+		fmt.Println(user + " " + password)
+		fmt.Println(hasAuth)
 	}
 }
 */
@@ -201,15 +203,20 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
-		var conf = false
+		//var conf = false
 		if hasAuth {
 			for _, combo := range requires {
 				if combo[0] == user+" "+password {
-					conf = true
+					expiration := time.Now().Add(24*time.Hour)
+					cookie := http.Cookie{Name: "AAUEremotecredentials", Value: user, Expires: expiration}
+					http.SetCookie(w, &cookie)
+					//conf = true
 				}
 			}
 		}
-		if conf == true {
+		coo, _ :=  r.Cookie("AAUEremotecredentials")
+		fmt.Println(coo)
+		if coo != nil{
 			h(w, r, ps)
 		} else {
 			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
@@ -237,8 +244,8 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			t.Execute(w, nil)
 		} else {
 			r.ParseForm()
-			name := r.Form["nome"][0]
-			cc := r.Form["cc"][0]
+			//name := r.Form["nome"][0]
+			//cc := r.Form["cc"][0]
 			//tipo := r.Form["tipo"]
 
 			in, header, err := r.FormFile("photo")
@@ -257,15 +264,6 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 				}
 			}
 			//oldCred(header.Filename, name[0], cc[0], acessoA)
-		}
-		fmt.Println("method:", r.Method)
-		if r.Method == "GET" {
-			t, _ := template.ParseFiles("./templates/credform.html")
-			t.Execute(w, nil)
-		} else {
-			//login(w, r, h)  // basicAuth i guess
-			fmt.Println("hey")
-			//http.Redirect()
 		}
 	}
 }
