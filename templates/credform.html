@@ -4,7 +4,7 @@
     <title></title>
 </head>
 <body>
-    <form action="/cred/" method="post">
+    <form enctype="multipart/form-data" action="/cred/" method="post">
         <table style="width: 30%;">
             <tr>
                 <td>Nome:</td>
@@ -14,14 +14,8 @@
                 <td>CC/Matricula/Data:</td><td><input type="text" name="cc"></td>
             </tr>
             <tr>
-                <td>Tipo de Utilizador:</td>
-                <td>
-                    <select style="width: 90%" name="tipo">
-                        <option value="aaue">AAUE</option>
-                        <option value="nucleos">Núcleos</option>
-                        <option value="servicos">Serviços</option>
-                    </select>
-                </td>
+                <td>Imagem:</td>
+                <td><input type="file" name="photo"></td>
             </tr>
             <tr>
                 <td rowspan="2">Zonas:</td>
@@ -40,12 +34,8 @@
                     8<input type="checkbox" name="z8" value="1">
                 </td>
             </tr>
-            <tr>
-                <td>Imagem:</td>
-                <td><input type="file" name="photo"></td>
-            </tr>
         </table>
-        <input type="submit" value="Submit">
+        <input type="submit" value="cred">
     </form>
 </body>
 </html>

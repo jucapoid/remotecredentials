@@ -76,7 +76,7 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 		t.Execute(w, nil)
 		fmt.Println("Served credform.html file")
 	} else {
-		r.ParseForm()
+		r.ParseMultipartForm(32 << 20)
 		fmt.Println("Post")
 		name := r.Form["nome"][0]
 		cc := r.Form["cc"][0]
@@ -88,13 +88,14 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 		checkerr(err)
 		defer out.Close()
 		io.Copy(out, in)
-		for k, _ := range r.Form {
-			if k[0] == 'z' {
-				acessoA[k[1]-1] = string(k[1])
+		/*for i, k := range r.Form {
+			fmt.Println(i+" " +k[0])
+			if i[0] == 'z' {
+				acessoA[i[1]-1] = string(i[1])
 			} else {
 				acessoA[k[1]-1] = "X"
 			}
-		}
+		}*/
 		oldCred(header.Filename, name, cc, acessoA)
 	}
 }
