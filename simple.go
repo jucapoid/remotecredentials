@@ -183,5 +183,3 @@ func main() {
 	}()
 	http.ListenAndServeTLS(":9090", "cert.pem", "key.pem", router) // Final version should use port 443
 }
-
-
