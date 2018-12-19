@@ -1,0 +1,3 @@
+Pillow
+pyqrcode
+pypng

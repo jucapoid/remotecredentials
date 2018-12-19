@@ -112,7 +112,7 @@ func oldCred(photo string, name string, cc string, acessoA [8]string) string {
 		acessoS += " " + v + " "
 	}
 	//cmd := exec.Command("cd old/; python credencias.py " + photo + " " + name + " " + cc + " " + acessoS)
-	cmd := exec.Command("cd old/; python credencias.py " + photo1 + " " + name + " " + cc + " " + acessoS)
+	cmd := exec.Command("python credencias.py " + photo1 + " " + name + " " + cc + " " + acessoS)
 	//stmt, err := db.Prepare("INSERT INTO createdcreds values (?,?,?)")
 	//checkerr(err)
 	//res, err := stmt.Exec("1", time.Now(), name) // uuid, date, user
