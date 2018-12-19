@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/gorilla/securecookie"
 	"html/template"
 	"io"
 	"log"
@@ -12,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/sessions"
+	//"github.com/gorilla/sessions"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/mattn/go-sqlite3"
 	//"github.com/gorilla/csrf"
@@ -172,7 +173,7 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			r.ParseForm()
 			name := r.Form["nome"]
 			cc := r.Form["cc"]
-			tipo := r.Form["tipo"]
+			//tipo := r.Form["tipo"]
 
 			in, header, err := r.FormFile("photo")
 			checkerr(err)
@@ -199,6 +200,7 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 		//login(w, r, h)  // basicAuth i guess
 		fmt.Println("hey")
 		//http.Redirect()
+		}
 	}
 }
 
@@ -208,7 +210,7 @@ func checkerr(err error) {
 	}
 }
 
-func oldCred(photo string, name string, cc string, acessoA []string) string {
+func oldCred(photo string, name []string, cc []string, acessoA [8]string) string {
 	// Just for now so that something can be presented
 	// foto.png must be named with the name or have the name an extra
 	// Pcmd := "python tests.py"
