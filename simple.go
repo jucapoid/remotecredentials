@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/mattn/go-sqlite3"
@@ -104,6 +103,10 @@ func ReadCookieHandler(w http.ResponseWriter, r *http.Request, h httprouter.Hand
 }
 
 // end new cookie and session
+//var s = sessions.NewCookieStore(os.Getenv("SESSION_KEY"))
+
+//var s = sessions.NewCookieStore(securecookie.GenerateRandomKey(32))
+var s = sessions.NewCookieStore([]byte("something-very-secret"))
 
 func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -112,10 +115,12 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
-		}
+		} // if value != cookie[value]; exit
 		s1.Options = &sessions.Options{
-			//address:	ip
-			//Name:     "AAUEremotecredencials",
+			Domain: "localhost",
+			// Value:  []byte("something-very-secret"),
+			// address:	ip
+			// Domain:     "AAUEremotecredencials",
 			Path:     "/",
 			MaxAge:   86400, // a day
 			HttpOnly: true,
@@ -188,28 +193,16 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			}
 			//oldCred() // photo obj, name, id(cc), acessoA
 		}
+	*/
+	fmt.Println("method:", r.Method)
+	if r.Method == "GET" {
+		t, _ := template.ParseFiles("./templates/credform.html")
+		t.Execute(w, nil)
 	} else {
 		//login(w, r, h)  // basicAuth i guess
 		fmt.Println("hey")
 		//http.Redirect()
 	}
-}
-
-func sayhelloName(w http.ResponseWriter, r *http.Request, _ httprouter.Params) { //
-	r.ParseForm()       // parse arguments, you have to call this by yourself
-	fmt.Println(r.Form) // print form information in server side
-	fmt.Println("path", r.URL.Path)
-	fmt.Println("scheme", r.URL.Scheme)
-	fmt.Println(r.Form["url_long"]) // why?
-	var name string
-	for k, v := range r.Form { // why would we parse the form if there's no POST here?
-		fmt.Println(r.Form)
-		fmt.Println("key:", k)
-		fmt.Println("val:", strings.Join(v, ""))
-		name += strings.Join(v, " ") + " "
-		// Very dangerous!! Input Validation of expected only
-	}
-	fmt.Fprintf(w, "Hello %s\n your input has been received", name) // send data to client side
 }
 
 func checkerr(err error) {
@@ -218,7 +211,7 @@ func checkerr(err error) {
 	}
 }
 
-func oldCred(photo string, name string, cc string, acessoA []string) string { // add arg cookie
+func oldCred(photo string, name string, cc string, acessoA []string) string {
 	// Just for now so that something can be presented
 	// foto.png must be named with the name or have the name an extra
 	// Pcmd := "python tests.py"
@@ -285,7 +278,7 @@ func main() {
 	}
 	fmt.Println(check)
 	router := httprouter.New()
-	router.GET("/", sayhelloName)
+	router.GET("/", aboutPage)
 	// router.GET("/login/", login)
 	router.GET("/about/", aboutPage)
 	router.GET("/cred/", BasicAuth(cred, check))
