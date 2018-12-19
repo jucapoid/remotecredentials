@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"os"
+	"strconv"
 
 	//"io"
 	"log"
@@ -84,13 +85,16 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 		in, header, err := r.FormFile("photo")
 		checkerr(err)
 		defer in.Close()
-		out, err := os.OpenFile("old/"+header.Filename, os.O_WRONLY|os.O_CREATE, 0644)
+		out, err := os.OpenFile(header.Filename, os.O_WRONLY|os.O_CREATE, 0644)
 		checkerr(err)
 		defer out.Close()
 		io.Copy(out, in)
-		for k, _ := range r.Form {
+		for k,_ := range r.Form {
 			if k[0] == 'z' {
-				acessoA[k[1]-1] = string(k[1])
+				i := strings.Trim(k, "z")
+				i1, _ := strconv.Atoi(i)
+				fmt.Println(i1)
+				acessoA[i1-1] = i
 			}
 		}
 		oldCred(header.Filename, name, cc, acessoA)
@@ -112,7 +116,7 @@ func oldCred(photo string, name string, cc string, acessoA [8]string) string {
 		acessoS += " " + v + " "
 	}
 	//cmd := exec.Command("cd old/; python credencias.py " + photo + " " + name + " " + cc + " " + acessoS)
-	cmd := exec.Command("python credencias.py " + photo1 + " " + name + " " + cc + " " + acessoS)
+	cmd := exec.Command("/bin/python credencias.py " + photo + " " + name + " " + cc + " " + acessoS)
 	//stmt, err := db.Prepare("INSERT INTO createdcreds values (?,?,?)")
 	//checkerr(err)
 	//res, err := stmt.Exec("1", time.Now(), name) // uuid, date, user
