@@ -3,22 +3,24 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/securecookie"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/satori/go.uuid"
 
 	//"github.com/gorilla/sessions"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/mattn/go-sqlite3"
 	//"github.com/gorilla/csrf"
 	/*
-		"github.com/satori/go.uuid"
 		"encoding/base64"
 		"net/url"
 		"sync"
@@ -37,48 +39,6 @@ var store = sessions.NewCookieStore(os.Getenv("SESSION_KEY")) // export SESSION_
 // Useless new cookie and session stuff
 var hashKey = []byte("very-secret")   // probably get genKey.sh output
 var blockKey = []byte("a-lot-secret") // another genKey.sh output
-
-func SetCookieHandle(w http.ResponseWriter, r *http.Request) {
-	value := map[string]string{hashKey: blockKey} // maybe hashkey: blockKey
-	if encoded, err := s.Encode("AAUEremotecredencials", value); err == nil {
-		cookie := &http.Cookie{Name: "AAUEremotecredencials", Value: encoded, Path: "/"}
-	}
-
-}
-
-func readCookieHandler(w http.ResponseWriter, r *http.Request) {
-	if cookie, err := r.Cookie("AAUEremotecredencials"); err == nil {
-		value := make(map[string]string)
-		if err = s2.Decode("AAUEremotecredencials", cookie.Value, &value); err == nil {
-			fmt.Fprintf(w, "The value of the key is %q", value[hashKey])
-		}
-	}
-}
-
-func MyHandler(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "AAUEremotecredencials")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-		// Maybe setcookie?
-	}
-	session.Values[hashKey] = blockKey
-	session.Save(r, w)
-}
-*/
-/*
-func logout(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("AAUEremotecredencials")
-	if err != nil {
-		return
-		// The user isn't logged in because cookie isnt set
-	}
-}
-*/
-
-//var s = sessions.NewCookieStore(os.Getenv("SESSION_KEY"))
-//var s = sessions.NewCookieStore(securecookie.GenerateRandomKey(32))
-//var s = sessions.NewCookieStore([]byte("something-very-secret"))
 
 var hashKey = []byte("very-secret")
 var blockKey = []byte("a-lot-secret")
@@ -114,12 +74,99 @@ func ReadCookieHandler(w http.ResponseWriter, r *http.Request, h httprouter.Hand
 	}
 }
 
-// end new cookie and session
+func MyHandler(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "AAUEremotecredencials")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+		// Maybe setcookie?
+	}
+	session.Values[hashKey] = blockKey
+	session.Save(r, w)
+}
+*/
+/*
+func logout(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("AAUEremotecredencials")
+	if err != nil {
+		return
+		// The user isn't logged in because cookie isnt set
+	}
+}
+*/
 
+//var s = sessions.NewCookieStore(os.Getenv("SESSION_KEY"))
+//var s = sessions.NewCookieStore(securecookie.GenerateRandomKey(32))
+//var s = sessions.NewCookieStore([]byte("something-very-secret"))
+
+func MyCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	// get req and check if it has cookie if not serve a new cookie
+	_, err := r.Cookie("AAUEremotecredencials")
+	if err != nil {
+		id, _ := uuid.NewV4()
+		// id := HMAC256() // Arguments?
+		expiration := time.Now().Add(24 * time.Hour) // 24h keys
+		cookie := http.Cookie{
+			Name:   "AAUEremotecredencials",
+			Domain: "localhost", // im guessing something like that
+			Value:  id.String(),
+			// Value:   HMAC256("AAUEremotecredencials", "AAUEremotecredencials"),  // safer than uuid
+			Expires: expiration} // No maxAge, makes cookie ageless
+		// Domain: "aauecred.net"  // set on /etc/hosts
+		http.SetCookie(w, &cookie)
+	}
+	// force to load login
+}
+
+type Manager struct {
+	cookieName  string     //private cookiename
+	lock        sync.Mutex // protects session
+	provider    Provider
+	maxlifetime int64
+}
+
+type Provider interface {
+	SessionInit(sid string) (Session, error)
+	SessionRead(sid string) (Session, error)
+	SessionDestroy(sid string) error
+	SessionGC(maxLifeTime int64)
+}
+
+type Session interface {
+	Set(key, value interface{}) error //set custom session value
+	Get(key interface{}) interface{}  //get custom session value
+	Delete(key interface{}) error     //delete session value
+	SessionID() string                //back current sessionID
+}
+
+type CookieForm struct {
+	Name string
+	//lock     sync.Mutex // Not yet
+	lifeTime int64
+}
+
+func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
+	cookie, err := r.Cookie(manager.cookieName)
+	if err != nil || cookie.Value == "" {
+		sid := session.SessionID()
+		session, _ = manager.provider.SessionInit(sid)
+		cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxlifetime)} // HttpOnly: false
+		http.SetCookie(w, &cookie)                                                                                                                // So i guess this replaces the MyCookie func?
+	} else {
+		sid, _ := url.QueryUnescape(cookie.Value)
+		session, _ = manager.provider.SessionRead(sid)
+	}
+	return
+}
+
+// end new cookie and session
+/*
 func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
-		/*s1, err := s.Get(r, "AAUEremotecredencials")
+		s1, err := s.Get(r, "AAUEremotecredencials")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -132,7 +179,7 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 			Path:     "/",
 			MaxAge:   86400, // a day
 			HttpOnly: true,
-		}*/
+		}
 		if hasAuth {
 			for _, combo := range requires {
 				if combo[0] == user+" "+password {
@@ -142,15 +189,34 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 					/*s1.Values["login"] = true
 					s1.Values["user"] = user
 					err := s1.Save(r, w)
-					checkerr(err)*/
+					checkerr(err)
 				}
 			}
 		}
 		ReadCookieHandler(w,r, h, ps)
 	}
 }
+*/
 
-
+func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		user, password, hasAuth := r.BasicAuth()
+		var conf = false
+		if hasAuth {
+			for _, combo := range requires {
+				if combo[0] == user+" "+password {
+					conf = true
+				}
+			}
+		}
+		if conf == true {
+			h(w, r, ps)
+		} else {
+			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		}
+	}
+}
 
 func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 	_, err := r.Cookie("username")
@@ -171,8 +237,8 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			t.Execute(w, nil)
 		} else {
 			r.ParseForm()
-			name := r.Form["nome"]
-			cc := r.Form["cc"]
+			name := r.Form["nome"][0]
+			cc := r.Form["cc"][0]
 			//tipo := r.Form["tipo"]
 
 			in, header, err := r.FormFile("photo")
@@ -192,14 +258,14 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			}
 			oldCred(header.Filename, name, cc, acessoA)
 		}
-	fmt.Println("method:", r.Method)
-	if r.Method == "GET" {
-		t, _ := template.ParseFiles("./templates/credform.html")
-		t.Execute(w, nil)
-	} else {
-		//login(w, r, h)  // basicAuth i guess
-		fmt.Println("hey")
-		//http.Redirect()
+		fmt.Println("method:", r.Method)
+		if r.Method == "GET" {
+			t, _ := template.ParseFiles("./templates/credform.html")
+			t.Execute(w, nil)
+		} else {
+			//login(w, r, h)  // basicAuth i guess
+			fmt.Println("hey")
+			//http.Redirect()
 		}
 	}
 }
@@ -210,7 +276,7 @@ func checkerr(err error) {
 	}
 }
 
-func oldCred(photo string, name []string, cc []string, acessoA [8]string) string {
+func oldCred(photo string, name string, cc string, acessoA [8]string) string {
 	// Just for now so that something can be presented
 	// foto.png must be named with the name or have the name an extra
 	// Pcmd := "python tests.py"
@@ -315,68 +381,6 @@ func HMAC256(payload string, secret string) string {
 
 func b64Encode(text string) string {
 	return base64.RawStdEncoding.EncodeToString([]byte(text))
-}
-
-func MyCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// get req and check if it has cookie if not serve a new cookie
-	_, err := r.Cookie("AAUEremotecredencials")
-	if err != nil {
-		id, _ := uuid.NewV4()
-		// id := HMAC256() // Arguments?
-		expiration := time.Now().Add(24 * time.Hour) // 24h keys
-		cookie := http.Cookie{
-			Name:   "AAUEremotecredencials",
-			Domain: "creds.aaue.pt", // im guessing something like that
-			Value:  id.String(),
-			// Value:   HMAC256("AAUEremotecredencials", "AAUEremotecredencials"),  // safer than uuid
-			Expires: expiration} // No maxAge, makes cookie ageless
-		// Domain: "aauecred.net"  // set on /etc/hosts
-		http.SetCookie(w, &cookie)
-	}
-	// force to load login
-}
-
-type Manager struct {
-	cookieName  string     //private cookiename
-	lock        sync.Mutex // protects session
-	provider    Provider
-	maxlifetime int64
-}
-
-type Provider interface {
-	SessionInit(sid string) (Session, error)
-	SessionRead(sid string) (Session, error)
-	SessionDestroy(sid string) error
-	SessionGC(maxLifeTime int64)
-}
-
-type Session interface {
-	Set(key, value interface{}) error //set custom session value
-	Get(key interface{}) interface{}  //get custom session value
-	Delete(key interface{}) error     //delete session value
-	SessionID() string                //back current sessionID
-}
-
-type CookieForm struct {
-	Name string
-	//lock     sync.Mutex // Not yet
-	lifeTime int64
-}
-
-func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
-	manager.lock.Lock()
-	defer manager.lock.Unlock()
-	cookie, err := r.Cookie(manager.cookieName)
-	if err != nil || cookie.Value == "" {
-		sid := session.SessionID()
-		session, _ = manager.provider.SessionInit(sid)
-		cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxlifetime)} // HttpOnly: false
-		http.SetCookie(w, &cookie)                                                                                                                // So i guess this replaces the MyCookie func?
-	} else {
-		sid, _ := url.QueryUnescape(cookie.Value)
-		session, _ = manager.provider.SessionRead(sid)
-	}
-	return
 }
 
 func dbManager(q string) {
