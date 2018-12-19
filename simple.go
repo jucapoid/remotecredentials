@@ -68,7 +68,7 @@ func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 }
 
 func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
-	var acessoA [8]string
+	acessoA := [8]string{"X", "X", "X", "X", "X", "X", "X", "X"}
 	fmt.Println(r.Form)
 	fmt.Println("method:", r.Method)
 	if r.Method == "GET" {
@@ -84,18 +84,15 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 		in, header, err := r.FormFile("photo")
 		checkerr(err)
 		defer in.Close()
-		out, err := os.OpenFile(header.Filename, os.O_WRONLY|os.O_CREATE, 0644)
+		out, err := os.OpenFile("old/"+header.Filename, os.O_WRONLY|os.O_CREATE, 0644)
 		checkerr(err)
 		defer out.Close()
 		io.Copy(out, in)
-		/*for i, k := range r.Form {
-			fmt.Println(i+" " +k[0])
-			if i[0] == 'z' {
-				acessoA[i[1]-1] = string(i[1])
-			} else {
-				acessoA[k[1]-1] = "X"
+		for k, _ := range r.Form {
+			if k[0] == 'z' {
+				acessoA[k[1]-1] = string(k[1])
 			}
-		}*/
+		}
 		oldCred(header.Filename, name, cc, acessoA)
 	}
 }
@@ -107,30 +104,27 @@ func checkerr(err error) {
 }
 
 func oldCred(photo string, name string, cc string, acessoA [8]string) string {
-	// Just for now so that something can be presented
-	// foto.png must be named with the name or have the name an extra
-	// Pcmd := "python tests.py"
-	// args := ""
-	// cmd := Pcmd + args
+	photo1 := strings.Split(photo, ".jpg")[0]
 	var acessoS string
-	db, err := sql.Open("sqlite3", "db.sql")
-	checkerr(err)
+	//db, err := sql.Open("sqlite3", "db.sql")
+	//checkerr(err)
 	for _, v := range acessoA {
 		acessoS += " " + v + " "
 	}
-	cmd := exec.Command("cd old; python credencias.py " + photo + " " + name + " " + cc + " " + acessoS)
-	stmt, err := db.Prepare("INSERT INTO createdcreds values (?,?,?)")
-	checkerr(err)
-	res, err := stmt.Exec("1", time.Now(), name) // uuid, date, user
-	checkerr(err)
-	affect, err := res.RowsAffected()
-	checkerr(err)
-	fmt.Println(affect)
+	//cmd := exec.Command("cd old/; python credencias.py " + photo + " " + name + " " + cc + " " + acessoS)
+	cmd := exec.Command("cd old/; python credencias.py " + photo1 + " " + name + " " + cc + " " + acessoS)
+	//stmt, err := db.Prepare("INSERT INTO createdcreds values (?,?,?)")
+	//checkerr(err)
+	//res, err := stmt.Exec("1", time.Now(), name) // uuid, date, user
+	//checkerr(err)
+	//affect, err := res.RowsAffected()
+	//checkerr(err)
+	//fmt.Println(affect)
 	fmt.Println("Creating new credencial for " + name + " named cred" + name)
 	if errV := cmd.Run(); errV != nil {
 		log.Fatalf("Error: ", errV) // It's better than Start bc it waits to the command to finish
 	}
-	return photo + name + ".png"
+	return photo1 + name + ".png"
 }
 
 func redirTLS(w http.ResponseWriter, req *http.Request) {
