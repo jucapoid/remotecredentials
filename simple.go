@@ -190,7 +190,7 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 					acessoA[k[1]-1] = "X"
 				}
 			}
-			oldCred(header.Filename, name, cc, acessoA)
+			//oldCred(header.Filename, name[0], cc[0], acessoA)
 		}
 	fmt.Println("method:", r.Method)
 	if r.Method == "GET" {
