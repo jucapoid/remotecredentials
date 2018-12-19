@@ -69,12 +69,46 @@ func MyHandler(w http.ResponseWriter, r *http.Request) {
 
 var s = sessions.NewCookieStore(securecookie.GenerateRandomKey(32))
 
+var hashKey = []byte("very-secret")
+var blockKey = []byte("a-lot-secret")
+
+var c = securecookie.New(hashKey,blockKey)
+
+func SetCookieHandler(w http.ResponseWriter, r *http.Request, user string) {
+	value := map[string]string{
+		"user" : user,
+	}
+	if encoded, err := c.Encode("AAUEremotecredencials", value); err == nil {
+		cookie := &http.Cookie{
+			Name:  "AAUEremotecredencials",
+			Value: encoded,
+			Path:  "/",
+			Secure: true,
+		}
+		http.SetCookie(w, cookie)
+	}
+}
+
+func ReadCookieHandler(w http.ResponseWriter, r *http.Request, h httprouter.Handle, ps httprouter.Params) {
+	if cookie, err := r.Cookie("AAUEremotecredencials"); err == nil {
+		value := make(map[string]string)
+		if err = c.Decode("AAUEremotecredencials", cookie.Value, &value); err != nil {
+			h(w, r, ps)
+		} else {
+			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		}
+	} else {
+		fmt.Println("fuck")
+	}
+}
+
 // end new cookie and session
 
 func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user, password, hasAuth := r.BasicAuth()
-		s1, err := s.Get(r, "AAUEremotecredencials")
+		/*s1, err := s.Get(r, "AAUEremotecredencials")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -85,33 +119,24 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 			Path:     "/",
 			MaxAge:   86400, // a day
 			HttpOnly: true,
-		}
-		//var conf = false
-		if hasAuth { // Shouldn't this be !hasAuth ???
+		}*/
+		if hasAuth {
 			for _, combo := range requires {
 				if combo[0] == user+" "+password {
 					// conf = true
 					// Save in cookie value["login"] = true
-					s1.Values["login"] = true
+					SetCookieHandler(w, r, user)
+					/*s1.Values["login"] = true
 					s1.Values["user"] = user
 					err := s1.Save(r, w)
-					checkerr(err)
+					checkerr(err)*/
 				}
 			}
 		}
-		for i, val := range s1.Values{
-			fmt.Print(i)
-			fmt.Print(" ")
-			fmt.Println(val)
-		}
-		if s1.Values["login"] == true {
-			h(w, r, ps)
-		} else {
-			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		}
+		ReadCookieHandler(w,r, h, ps)
 	}
 }
+
 
 /*
 func logout(w http.ResponseWriter, r *http.Request) {
@@ -134,11 +159,7 @@ func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 	var acessoA [8]string
 	fmt.Println(r.Form)
-	co, err := r.Cookie("AAUEremotecredencials")
-	for _, val := range co.Value{
-		fmt.Print(" ")
-		fmt.Println(val)
-	}
+	_, err := r.Cookie("AAUEremotecredencials")
 	if err != nil {
 		fmt.Println("method:", r.Method)
 		if r.Method == "GET" {
@@ -169,7 +190,7 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 		}
 	} else {
 		//login(w, r, h)  // basicAuth i guess
-		fmt.Println()
+		fmt.Println("hey")
 		//http.Redirect()
 	}
 }
