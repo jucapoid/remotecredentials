@@ -65,8 +65,19 @@ func MyHandler(w http.ResponseWriter, r *http.Request) {
 	session.Save(r, w)
 }
 */
+/*
+func logout(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("AAUEremotecredencials")
+	if err != nil {
+		return
+		// The user isn't logged in because cookie isnt set
+	}
+}
+*/
 
-var s = sessions.NewCookieStore(securecookie.GenerateRandomKey(32))
+//var s = sessions.NewCookieStore(os.Getenv("SESSION_KEY"))
+//var s = sessions.NewCookieStore(securecookie.GenerateRandomKey(32))
+//var s = sessions.NewCookieStore([]byte("something-very-secret"))
 
 var hashKey = []byte("very-secret")
 var blockKey = []byte("a-lot-secret")
@@ -103,10 +114,6 @@ func ReadCookieHandler(w http.ResponseWriter, r *http.Request, h httprouter.Hand
 }
 
 // end new cookie and session
-//var s = sessions.NewCookieStore(os.Getenv("SESSION_KEY"))
-
-//var s = sessions.NewCookieStore(securecookie.GenerateRandomKey(32))
-var s = sessions.NewCookieStore([]byte("something-very-secret"))
 
 func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -143,15 +150,6 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 }
 
 
-/*
-func logout(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("AAUEremotecredencials")
-	if err != nil {
-		return
-		// The user isn't logged in because cookie isnt set
-	}
-}
-*/
 
 func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 	_, err := r.Cookie("username")
@@ -172,9 +170,9 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 			t.Execute(w, nil)
 		} else {
 			r.ParseForm()
-			//name := r.Form["nome"]
-			//cc := r.Form["cc"]
-			//tipo := r.Form["tipo"]
+			name := r.Form["nome"]
+			cc := r.Form["cc"]
+			tipo := r.Form["tipo"]
 
 			in, header, err := r.FormFile("photo")
 			checkerr(err)
@@ -191,9 +189,8 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 					acessoA[k[1]-1] = "X"
 				}
 			}
-			//oldCred() // photo obj, name, id(cc), acessoA
+			oldCred(header.Filename, name, cc, acessoA)
 		}
-	*/
 	fmt.Println("method:", r.Method)
 	if r.Method == "GET" {
 		t, _ := template.ParseFiles("./templates/credform.html")
