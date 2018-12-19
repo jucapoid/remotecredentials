@@ -7,19 +7,19 @@ import PIL.Image as PImage
 
 def acesso(acessoA):
 		draw.rectangle(((200, 170), (235, 205)), fill="red", outline="white")
-		draw.text((200 + 13, 170 + 6), acessoA[0], (0, 0, 0), font=font, fill="black")
+		draw.text((200 + 13, 170 + 6), acessoA[0], (0, 0, 0), font=font)
 		draw.rectangle(((235, 170), (270, 205)), fill="red", outline="white")
-		draw.text((235 + 13, 170 + 6), acessoA[1], (0, 0, 0), font=font, fill="black")
+		draw.text((235 + 13, 170 + 6), acessoA[1], (0, 0, 0), font=font)
 		draw.rectangle(((270, 170), (305, 205)), fill="red", outline="white")
-		draw.text((270 + 13, 170 + 6), acessoA[2], (0, 0, 0), font=font, fill="black")
+		draw.text((270 + 13, 170 + 6), acessoA[2], (0, 0, 0), font=font)
 		draw.rectangle(((305, 170), (340, 205)), fill="red", outline="white")
-		draw.text((305 + 13, 170 + 6), acessoA[3], (0, 0, 0), font=font, fill="black")
+		draw.text((305 + 13, 170 + 6), acessoA[3], (0, 0, 0), font=font)
 		draw.rectangle(((200 + 35 / 2, 205), (235 + 35 / 2, 240)), fill="red", outline="white")
-		draw.text((200 + 35 / 2 + 13, 205 + 6), acessoA[4], (0, 0, 0), font=font, fill="black")
+		draw.text((200 + 35 / 2 + 13, 205 + 6), acessoA[4], (0, 0, 0), font=font)
 		draw.rectangle(((235 + 35 / 2, 205), (270 + 35 / 2, 240)), fill="red", outline="white")
-		draw.text((235 + 35 / 2 + 13, 205 + 6), acessoA[5], (0, 0, 0), font=font, fill="black")
+		draw.text((235 + 35 / 2 + 13, 205 + 6), acessoA[5], (0, 0, 0), font=font)
 		draw.rectangle(((270 + 35 / 2, 205), (305 + 35 / 2, 240)), fill="red", outline="white")
-		draw.text((270 + 35 / 2 + 13, 205 + 6), acessoA[6], (0, 0, 0), font=font, fill="black")
+		draw.text((270 + 35 / 2 + 13, 205 + 6), acessoA[6], (0, 0, 0), font=font)
 
 
 photo = sys.argv[1]
@@ -91,21 +91,4 @@ draw.text((37, height - 54), 'A232T3QF2017', (0, 0, 0), font=font)  # is this a 
 acesso(acessoA)
 
 img.save(credN + ".png")
-
-"""
-draw.rectangle(((200, 170), (235, 205)), fill="red", outline="white")
-draw.text((200 + 13, 170 + 6), "a1", (0, 0, 0), font=font)
-draw.rectangle(((235, 170), (270, 205)), fill="red", outline="white")
-draw.text((235 + 13, 170 + 6), "a2", (0, 0, 0), font=font)
-draw.rectangle(((270, 170), (305, 205)), fill="red", outline="white")
-draw.text((270 + 13, 170 + 6), "a3", (0, 0, 0), font=font)
-draw.rectangle(((305, 170), (340, 205)), fill="red", outline="white")
-draw.text((305 + 13, 170 + 6), "a4", (0, 0, 0), font=font)
-draw.rectangle(((200 + 35 / 2, 205), (235 + 35 / 2, 240)), fill="red", outline="white")
-draw.text((200 + 35 / 2 + 13, 205 + 6), "a5", (0, 0, 0), font=font)
-draw.rectangle(((235 + 35 / 2, 205), (270 + 35 / 2, 240)), fill="red", outline="white")
-draw.text((235 + 35 / 2 + 13, 205 + 6), "a6", (0, 0, 0), font=font)
-draw.rectangle(((270 + 35 / 2, 205), (305 + 35 / 2, 240)), fill="red", outline="white")
-draw.text((270 + 35 / 2 + 13, 205 + 6), "a7", (0, 0, 0), font=font)
-"""
 

@@ -4,9 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"io"
+	"os"
+
 	//"io"
 	"log"
 	"net/http"
+
 	//"os"
 	"os/exec"
 	"strings"
@@ -37,16 +41,16 @@ func BasicAuth(h httprouter.Handle, requires [][1]string) httprouter.Handle {
 		if hasAuth {
 			for _, combo := range requires {
 				if combo[0] == user+" "+password {
-					expiration := time.Now().Add(24*time.Hour)
+					expiration := time.Now().Add(24 * time.Hour)
 					cookie := http.Cookie{Name: "AAUEremotecredentials", Value: user, Expires: expiration}
 					http.SetCookie(w, &cookie)
 					//conf = true
 				}
 			}
 		}
-		coo, _ :=  r.Cookie("AAUEremotecredentials")
+		coo, _ := r.Cookie("AAUEremotecredentials")
 		fmt.Println(coo)
-		if coo != nil{
+		if coo != nil {
 			h(w, r, ps)
 		} else {
 			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
@@ -64,7 +68,7 @@ func aboutPage(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 }
 
 func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
-	//var acessoA [8]string
+	var acessoA [8]string
 	fmt.Println(r.Form)
 	fmt.Println("method:", r.Method)
 	if r.Method == "GET" {
@@ -74,9 +78,9 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 	} else {
 		r.ParseForm()
 		fmt.Println("Post")
-		/*name := r.Form["nome"][0]
+		name := r.Form["nome"][0]
 		cc := r.Form["cc"][0]
-		tipo := r.Form["tipo"]
+		//tipo := r.Form["tipo"]
 		in, header, err := r.FormFile("photo")
 		checkerr(err)
 		defer in.Close()
@@ -91,7 +95,7 @@ func cred(w http.ResponseWriter, r *http.Request, h httprouter.Params) {
 				acessoA[k[1]-1] = "X"
 			}
 		}
-		oldCred(header.Filename, name, cc, acessoA)*/
+		oldCred(header.Filename, name, cc, acessoA)
 	}
 }
 
@@ -111,12 +115,12 @@ func oldCred(photo string, name string, cc string, acessoA [8]string) string {
 	db, err := sql.Open("sqlite3", "db.sql")
 	checkerr(err)
 	for _, v := range acessoA {
-		acessoS += v
+		acessoS += " " + v + " "
 	}
 	cmd := exec.Command("cd old; python credencias.py " + photo + " " + name + " " + cc + " " + acessoS)
 	stmt, err := db.Prepare("INSERT INTO createdcreds values (?,?,?)")
 	checkerr(err)
-	res, err := stmt.Exec("1", time.Now(), "luis") // uuid, date, user
+	res, err := stmt.Exec("1", time.Now(), name) // uuid, date, user
 	checkerr(err)
 	affect, err := res.RowsAffected()
 	checkerr(err)
@@ -172,7 +176,7 @@ func main() {
 	router.GET("/", aboutPage)
 	router.GET("/about/", aboutPage)
 	router.GET("/cred/", BasicAuth(cred, check))
-	router.POST("/cred/", cred)  //BasicAuth cred check
+	router.POST("/cred/", cred) //BasicAuth cred check
 	// CrossSiteRequestForgery protection
 	//CSRF := csrf.Protect([]byte(hashKey))  // i think it is the hashKey
 	go func() {
